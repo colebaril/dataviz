@@ -56,7 +56,7 @@ p_load(tidyverse, jsonlite, knitr, gghighlight, plotly, hms, lubridate, here, gt
 
 ```{r}
 streamingData <- map_df(list.files(pattern = "*.json",
-                    path = here("Spotify/Data/"),
+                    path = here("Spotify-wrapped/Data/"),
                     full.names = TRUE),
                ~ fromJSON(., flatten = TRUE) 
                )
