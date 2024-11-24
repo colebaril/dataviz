@@ -12,7 +12,7 @@ output:
 knitr::opts_chunk$set(fig.width = 12, fig.asp = .7, out.width = "90%", echo = FALSE, warning = FALSE, message = FALSE)
 
 require(pacman)
-p_load(tidyverse, jsonlite, data.table, gt, patchwork, hms, tidytext, lubridate, ggtext, reshape2, wordcloud, treemapify, extrafont)
+p_load(tidyverse, here, jsonlite, data.table, gt, patchwork, hms, tidytext, lubridate, ggtext, reshape2, wordcloud, treemapify, extrafont)
 ```
 
 <style>
@@ -36,7 +36,7 @@ body, p, h1, h2, h3, h4, h5, h6 {
 
 
 ```{r, import_clean}
-twitter <- fromJSON("Data/tweet.json", flatten = TRUE) |> 
+twitter <- fromJSON(here("twitter/Data/tweet.json"), flatten = TRUE) |> 
   mutate(across(.cols = c(tweet.favorite_count, tweet.retweet_count), ~ as.numeric(.))) |> 
   mutate(statusreply = case_when(is.na(tweet.in_reply_to_status_id) ~ "Yes",
                              TRUE ~ "No")) |> 
@@ -46,7 +46,8 @@ twitter <- fromJSON("Data/tweet.json", flatten = TRUE) |>
          month = month(date),
          year = year(date),
          time = as_hms(datetime),
-         weekday = lubridate::wday(date, label = TRUE))
+         weekday = lubridate::wday(date, label = TRUE),
+         hour_floored = as_hms(floor_date(datetime, "hour")))
 ```
 
 ### <mark> __Histogram__ </mark>
@@ -186,7 +187,7 @@ twitter %>%
 ```{r}
 twitter %>% 
   summarize(n = n(),
-            .by = c(year, weekday)) %>% 
+            .by = c(year, weekday, hour_floored)) %>% 
   ggplot(aes(x = weekday, y = n)) + 
   geom_col(fill = "#1DA1F2", colour = "black") +
   labs(title = "Number of Tweets Sent during Days of the Week",
@@ -214,6 +215,41 @@ twitter %>%
         axis.line = element_line(colour = "black"))
 ```
 
+### <mark> __Tweet Heatmap__ </mark
+
+```{r, fig.width = 10}
+twitter |> 
+  summarize(n = n(),
+            .by = c(date, hour_floored, weekday)) |> 
+  mutate(year = format(date, "%Y")) |> 
+  summarize(n_tweets = sum(n),
+            .by = c(hour_floored, weekday)) |> 
+  drop_na() |> # NA Weekday value of 181 dropped. 
+  ggplot(aes(x = weekday, y = hour_floored, fill = n_tweets)) +
+  geom_tile(colour = "white", size = 0.1) + 
+  scale_fill_gradient(high = "#155A88", low = "#A6DFFC", labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+   scale_y_time(breaks = scales::breaks_width("2 hours"), 
+               labels = function(l) strftime(l, '%H:%M'),
+               expand = c(0, 0)) +
+  theme_bw(base_size = 20) +
+  labs(x = "Weekday",
+       y = "Local Time",
+       fill = "Tweets",
+       title = "Twitter Weekly Post Heatmap") +
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.title = element_text(hjust = 0.5),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank()
+  )
+```
 
 ###  <mark> __Twitter Activity & Favourites__ </mark>
 
