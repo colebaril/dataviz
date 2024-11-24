@@ -1,0 +1,309 @@
+---
+title: "Twitter Data"
+author: "Cole Baril"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: cosmo
+    toc: false
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(fig.width = 12, fig.asp = .7, out.width = "90%", echo = FALSE, warning = FALSE, message = FALSE)
+
+require(pacman)
+p_load(tidyverse, jsonlite, data.table, gt, patchwork, hms, tidytext, lubridate, ggtext, reshape2, wordcloud, treemapify, extrafont)
+```
+
+<style>
+mark {
+  background-color: #1DA1F2; /* Twitter blue background */
+  color: black; /* White text color for contrast */
+  padding: 0.2em; /* Optional: add some padding for better visual appearance */
+  border-radius: 3px; /* Optional: add rounded corners */
+}
+</style>
+
+
+<style>
+body, p, h1, h2, h3, h4, h5, h6 {
+  background-color: white;
+  color: black; 
+  font-family: Courier New;
+}
+</style>
+
+
+
+```{r, import_clean}
+twitter <- fromJSON("Data/tweet.json", flatten = TRUE) |> 
+  mutate(across(.cols = c(tweet.favorite_count, tweet.retweet_count), ~ as.numeric(.))) |> 
+  mutate(statusreply = case_when(is.na(tweet.in_reply_to_status_id) ~ "Yes",
+                             TRUE ~ "No")) |> 
+  mutate(datetime = parse_date_time(tweet.created_at, "a b d H:M:S z Y", tz = "UTC"),
+         datetime = with_tz(datetime, "America/Chicago"),
+         date = date(datetime),
+         month = month(date),
+         year = year(date),
+         time = as_hms(datetime),
+         weekday = lubridate::wday(date, label = TRUE))
+```
+
+### <mark> __Histogram__ </mark>
+
+```{r}
+twitter %>% 
+  summarize(n = n(),
+            .by = date) %>% 
+  ggplot(aes(x = n)) +
+  geom_histogram(fill = "#1DA1F2", colour = "black") +
+  labs(title = "Tweet Histogram",
+       x = "Number of Tweets",
+       y = "Number of Days Tweeted") +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
+   theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+```
+
+###  <mark> __Twitter Activity Over Time__ </mark> {.tabset}
+
+#### Date by Time
+
+```{r}
+twitter |> 
+  ggplot(aes(x = date, y = time)) +
+  geom_point(colour = "#1DA1F2", size = 1) +
+  geom_vline(
+    xintercept = date("2022-04-14"), color = "red",  
+    linetype = "dashed", size = 1, alpha = 0.5) +
+   annotate("text", 
+           x = date("2022-04-01"), 
+           y = hm("12:00"), 
+           label = 'atop(bold("Musk Buys Twitter"))',
+           colour = "red",
+           alpha = 0.5,
+           parse = TRUE,
+           angle = 90
+           ) +
+  
+   geom_vline(
+    xintercept = date("2024-11-15"), color = "black",  
+    linetype = "dashed", size = 1, alpha = 0.5) +
+   annotate("text", 
+           x = date("2024-11-01"), 
+           y = hm("12:00"), 
+           label = 'atop(bold("I joined Bluesky"))',
+           colour = "black",
+           alpha = 0.5,
+           parse = TRUE,
+           angle = 90
+           ) +
+  
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = c(0, 0)) +
+  scale_y_time(breaks = scales::breaks_width("4 hours"), 
+               labels = function(l) strftime(l, '%H:%M'),
+              
+               expand = c(0, 0)) +
+  labs(title = "Tweets by Me",
+       subtitle = "1 dot = 1 Tweet",
+       x = "Date",
+       y = "Local Time") +
+
+   theme_bw(base_size = 20, base_family = "Courier New") +
+   theme(panel.grid.major.x = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+  
+```
+
+#### Year by Hour
+
+```{r}
+twitter %>% 
+  mutate(hour_floor = floor_date(datetime, "hour")) %>%
+  mutate(hour = as_hms(hour_floor)) %>% 
+  summarize(n = n(),
+            .by = c(year, hour)) %>% 
+  mutate(hour = hour(hour)) %>% 
+  ggplot(aes(x = hour, y = n)) + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    geom_bar(stat = "identity", position = "dodge", fill = "#1DA1F2", colour = "black") +
+    scale_x_continuous(breaks = seq(0, 23, 4)) +
+    labs(title = "Number of Tweets Sent by Year and Hour",
+        x = "Local Time",
+        y = "Number of Tweets") +
+    facet_wrap(~year) +
+    theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+```
+
+#### Year by Weekday
+
+```{r}
+twitter %>% 
+  summarize(n = n(),
+            .by = c(year, weekday)) %>% 
+  ggplot(aes(x = weekday, y = n)) + 
+  geom_col(fill = "#1DA1F2", colour = "black") +
+  labs(title = "Number of Tweets Sent during Days of the Week",
+       x = "Day of the Week",
+       y = "Number of Tweets") +
+ 
+  facet_wrap(~year) +
+
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+```
+
+
+###  <mark> __Twitter Activity & Favourites__ </mark>
+
+```{r}
+twitter |> 
+  ggplot(aes(x = date, y = time)) +
+  geom_point(aes(color = statusreply, size = tweet.favorite_count), ) +
+    scale_colour_manual("Status or Reply?",
+    labels = c("Reply", "Status"),
+    values = c("black", "#1DA1F2")) +
+  
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = c(0, 0)) +
+  scale_y_time(breaks = scales::breaks_width("4 hours"), 
+               labels = function(l) strftime(l, '%H:%M'),
+               expand = c(0, 0)) +
+  scale_size("Number of Favourites", range = c(1, 15)) +
+  labs(title = "Tweets by Me: Number of Favourites",
+       subtitle = "1 dot = 1 Tweet",
+       x = "Date",
+       y = "Local Time") +
+
+   theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.size = unit(3, "point"),
+
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black")) +
+  guides(size = guide_legend(nrow = 1),
+         colour = guide_legend(override.aes = list(size = 10)))
+```
+
+###  <mark> __Tweet Length__ </mark>
+
+```{r}
+twitter |> 
+  unnest_wider(col = tweet.display_text_range, names_sep = "_") |> 
+  ggplot(aes(x = date, y = as.numeric(tweet.display_text_range_2))) +
+  geom_point(colour = "#1DA1F2",
+             size = 1) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  geom_vline(xintercept = date("2017-11-07"), linetype = "dashed", colour = "red") +
+  geom_hline(yintercept = 140, linetype = "dashed", colour = "red") +
+  geom_hline(yintercept = 280, linetype = "dashed", colour = "red") +
+  annotate("text", 
+           x = date("2017-10-15"), 
+           y = 300, 
+           label = 'atop(bold("Twitter announces character limit increase to 280"))',
+           parse = TRUE,
+           angle = 90) +
+  annotate("text", 
+           x = date("2015-10-01"),
+           y = 140,
+           label = 'atop(bold("140 Character Limit"))', 
+           parse = TRUE) +
+  annotate("text", 
+           x = date("2015-10-01"),
+           y = 280,
+           label = 'atop(bold("280 Character Limit"))',
+           parse = TRUE) +
+  labs(
+    title = "Number of Characters in Each Tweet",
+    x = "Date",
+    y = "Length of Tweet") +
+   theme_bw(base_size = 20, base_family = "Courier New") +
+   theme(panel.grid.major.x = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+```

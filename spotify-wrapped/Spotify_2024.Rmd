@@ -1,0 +1,472 @@
+---
+title: "Spotify Wrapped: R and ggplot2 Edition"
+author: "Cole Baril"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: cosmo
+    toc: false
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(fig.width = 12, fig.asp = .7, out.width = "90%", echo = FALSE, warning = FALSE, message = FALSE)
+
+require(pacman)
+p_load(tidyverse, jsonlite, knitr, gghighlight, plotly, hms, lubridate, here, gt, webshot, janitor, spotidy, zoo, extrafont, ggtext,
+       ggiraph, scales)
+```
+
+<style>
+mark {
+  background-color: #1db954; /* Green background */
+  color: black; /* White text color for contrast */
+  padding: 0.2em; /* Optional: add some padding for better visual appearance */
+  border-radius: 3px; /* Optional: add rounded corners */
+}
+</style>
+
+
+<style>
+body, p, h1, h2, h3, h4, h5, h6 {
+  background-color: white;
+  color: black; 
+  font-family: Courier New;
+}
+</style>
+
+
+```{r, import_clean}
+streamingData <- map_df(list.files(pattern = "*.json",
+                    path = here("Zip/MyData/"),
+                    full.names = TRUE),
+               ~ fromJSON(., flatten = TRUE) 
+               )
+
+spotify <- streamingData |> 
+  mutate(datetime = ymd_hms(ts) - hours(6),
+         date = date(datetime),
+         minutes = ms_played / 60000,
+         time = floor_date(datetime, "minutes")) 
+```
+
+```{r, info_card, fig.width = 15.5, fig.asp = .7, out.width = "90%"}
+
+most_listened_artist <- names(which.max(table(spotify$master_metadata_album_artist_name)))
+
+
+artist_data <- subset(spotify, master_metadata_album_artist_name == most_listened_artist)
+
+
+most_listened_album <- names(which.max(table(spotify$master_metadata_album_album_name)))
+
+
+album_data <- subset(spotify, master_metadata_album_album_name == most_listened_album)
+
+
+
+data <- data.frame(
+  x = rep(1:3, times = 2), 
+  y = rep(2:1, each = 3),    
+  label = c(
+    paste0(
+      "<span style='color:#232723; font-size:30px;'>Total Listening Time</span><br><br>",
+      "<span style='color:#457e59; font-size:40px;'>", format(as.integer(sum(spotify$minutes)), big.mark = ",", scientific = FALSE), " minutes</span>",
+      "<span style='color:#457e59; font-size:35px;'><br>", "(228 days)</span>"
+    ),
+    
+    paste0(
+      "<span style='color:#232723; font-size:30px;'>Days I Played Music</span><br><br>",
+      "<span style='color:#457e59; font-size:40px;'>", format(as.integer(length(unique(spotify$date))), big.mark = ",", scientific = FALSE)
+    ),
+    
+    paste0(
+      "<span style='color:#232723; font-size:30px;'>Total Songs Played</span><br><br>",
+      "<span style='color:#457e59; font-size:40px;'>", format(as.integer(nrow(spotify)), big.mark = ",", scientific = FALSE)
+    ),
+    
+     paste0(
+      "<span style='color:#232723; font-size:30px;'>Total Artists</span><br><br>",
+      "<span style='color:#457e59; font-size:40px;'>", 
+      format(as.integer(length(unique(spotify$master_metadata_album_artist_name))), big.mark = ",", scientific = FALSE)
+    ),
+    
+    paste0(
+      "<span style='color:#232723; font-size:30px;'>Top Artist</span><br><br>",
+      "<span style='color:#457e59; font-size:40px;'>", 
+      names(which.max(table(spotify$master_metadata_album_artist_name))), "<br>",
+       "<span style='color:#457e59; font-size:35px;'>", 
+      format(as.integer(nrow(artist_data)), big.mark = ",", scientific = FALSE), " songs", "<br>",
+      format(as.integer(sum(artist_data$minutes)), big.mark = ",", scientific = FALSE), " minutes"
+    ),
+    
+     paste0(
+      "<span style='color:#232723; font-size:30px;'>Top Album</span><br><br>",
+      "<span style='color:#457e59; font-size:40px;'>", 
+      names(which.max(table(spotify$master_metadata_album_album_name))), "<br>",
+       "<span style='color:#457e59; font-size:35px;'>", 
+      format(as.integer(nrow(album_data)), big.mark = ",", scientific = FALSE), " songs", "<br>",
+      format(as.integer(sum(album_data$minutes)), big.mark = ",", scientific = FALSE), " minutes"
+      )
+  )
+)
+
+ggplot(data) +
+  geom_rect(aes(xmin = x - 0.4, xmax = x + 0.4, ymin = y - 0.4, ymax = y + 0.4),
+            fill = "#62d089", color = "black", alpha = 0.5) +
+  geom_richtext(aes(x = x, y = y, label = label),
+                fill = NA, label.color = NA,  # Transparent background
+                size = 5, lineheight = 1.3, hjust = 0.5,
+                family = "Courier New", fontface = "bold") +
+  scale_x_continuous(expand = c(0, 0), limits = c(0.5, 3.5)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0.5, 2.5)) +
+  theme_void(base_family = "Courier New", base_size = 20) +
+  labs(title = "Spotify Wrapped: R & ggplot2 Edition",
+       subtitle = "2014 to 2024: 10 years of listening habits") +
+  theme(
+    plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 30),
+    plot.subtitle = element_text(hjust = 0.5)
+  ) 
+```
+
+### <mark> __Annual Listening Habits__ </mark>
+
+```{r, total_annual}
+annual_summary <- spotify |> 
+  filter(ms_played >= 1000) |> 
+  mutate(year = year(date)) |> 
+  summarise(n_songs = n(),
+            minutes_listened = sum(minutes, na.rm = TRUE),
+            top_artists = list(names(sort(table(master_metadata_album_artist_name), decreasing = TRUE)[1:3])),
+            .by = year) |> 
+  mutate(
+    top_artist = sapply(top_artists, `[`, 1),
+    second_artist = sapply(top_artists, `[`, 2),
+    third_artist = sapply(top_artists, `[`, 3)
+  ) |> 
+  select(-top_artists) |> 
+  mutate(year = factor(year)) 
+
+
+p <- spotify |> 
+  filter(ms_played >= 1000) |> 
+  group_by(year(date)) |> 
+  summarize(songs = n()) |> 
+  rename(year = `year(date)`) |> 
+  arrange(year) |> 
+  ggplot(aes(x = factor(year), y = songs)) +
+  geom_line(aes(group = 1), size = 1, colour = "#1db954") +
+  geom_point_interactive(data = annual_summary, 
+                         aes(x = factor(year), y = n_songs,
+                             tooltip = paste0(
+                               "Songs: ", comma(as.integer(n_songs)), "\n", 
+                               "Minutes: ", comma(as.integer(minutes_listened)), "\n",
+                               "Top Artist: ", top_artist, "\n",
+                               "2nd Artist: ", second_artist, "\n",
+                               "3rd Artist: ", third_artist
+                             )),
+                         alpha = 0.5, position = "stack",
+                         colour = "#0b3e34",
+                         size = 3) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  labs(title = "Number of Songs Played Annually",
+       subtitle = "<b>Hover Over Points for Additional Details</b>",
+       x = "Date", y = "Number of Songs", colour = "Songs") +
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_markdown(hjust = 0.5),
+
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+
+    girafe(ggobj = p,
+           options = list(
+             opts_hover(css = "fill:red;
+                        stroke:gray;
+                        stroke-width:2px;"),
+             opts_tooltip(css = "background-color:rgba(50, 50, 50, 0.7); 
+                          color:white; border-radius:5px; 
+                          padding:8px; font-family: 'Courier New'"),
+             opts_toolbar(saveaspng = FALSE)
+           ))
+```
+
+### <mark> __Daily Listening Habits__ </mark> {.tabset}
+
+#### Rolling Average
+
+```{r, rolling_avg_daily}
+spotify |> 
+  filter(ms_played >= 1000) |> 
+  group_by(date) |> 
+  summarize(songs = n()) |> 
+  arrange(date) |> 
+  mutate(songs_rolling = rollmean(songs, 30, fill = NA)) |>  # 30-day rolling average
+  ggplot(aes(x = date, y = songs_rolling)) +
+  geom_line(aes(colour = songs_rolling), size = 1.2) +
+ 
+  scale_x_date(breaks = "1 year", date_labels = "%Y", expand = c(0, 0)) +
+  scale_colour_gradient(high = "#0b3e34", low = "#1db954") + 
+  labs(title = "Number of Songs Played Daily: 30-Day Rolling Average",
+       x = "Date", y = "Number of Songs (30-day Rolling Average)", colour = "Songs") +
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+
+
+```
+
+#### Totals
+
+```{r, total_daily}
+spotify |> 
+  filter(ms_played >= 1000) |> 
+  group_by(date) |> 
+  summarize(songs = n()) |> 
+  arrange(date) |> 
+  ggplot(aes(x = date, y = songs)) +
+  geom_line(aes(colour = songs), size = 0.75, alpha = 0.5) +
+  geom_smooth(method = "loess", span = 0.1, size = 1.2, colour = "black", se = FALSE) +
+ 
+  scale_x_date(breaks = "1 year", date_labels = "%Y", expand = c(0, 0)) +
+  scale_colour_gradient(high = "#0b3e34", low = "#1db954") + 
+  labs(title = "Number of Songs Played Daily",
+       subtitle = "Smooth line (black) highlights long-term \ntrends while reducing daily fluctuations",
+       x = "Date", y = "Number of Songs", colour = "Songs") +
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+
+
+```
+
+### <mark> __Monthly Listening Habits__ </mark>
+
+```{r}
+spotify |>
+  filter(ms_played >= 1000) |>
+  mutate(month = month(date, label = TRUE)) |>
+  mutate(year = year(date)) |>
+  group_by(year, month) |>
+  summarize(total_songs = n()) |>
+  drop_na(month) |> 
+  ggplot(aes(x = month, y = total_songs, fill = total_songs)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~year) +
+  scale_fill_gradient("Total Songs", low = "#1db954", high = "#0b3e34", labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  labs(title = "Songs Played by Month",
+       x = "Month", y = "Total Songs Played") +
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        # panel.border = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 10)
+        )
+
+```
+
+### <mark> __Listening Heatmap__ </mark>
+
+```{r, fig.width = 10}
+spotify |> 
+  group_by(date, hour = hour(datetime), weekday = wday(date, label = TRUE)) |> 
+  summarize(minuteslistened = sum(minutes)) |> 
+  mutate(year = format(date, "%Y")) |> 
+  group_by(hour, weekday) |> 
+  summarize(minuteslistened = sum(minuteslistened)) |> 
+  drop_na() |> # NA Weekday value of 181 dropped. 
+  ggplot(aes(weekday, hour, fill = minuteslistened)) +
+  geom_tile(colour = "white", size = 0.1) + 
+  scale_fill_gradient(high = "#0b3e34", low = "#1db954", labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  scale_y_continuous(trans = "reverse") +
+  theme_bw(base_size = 20) +
+  labs(x = "Weekday",
+       y = "Hour of the Day (24-Hour, CST)",
+       fill = "Minutes",
+       title = "Spotify Weekly Listening Heatmap",
+       subtitle = "2014 to 2024 | Total Minutes: 328, 934 (228 Days)") +
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.title = element_text(hjust = 0.5),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank()
+  )
+```
+
+### <mark> __Top Artists Over Time__ </mark>
+
+```{r, fig.width = 15.5, fig.asp = .7, out.width = "90%"}
+
+
+spotify |> 
+  group_by(master_metadata_album_artist_name, date = floor_date(date, "month")) |> 
+  filter(master_metadata_album_artist_name %in% c(
+                                                  "Armin van Buuren", 
+                                                  "Above & Beyond",
+                                                  "GAIA",
+                                                  "Gareth Emery",
+                                                  "Alex M.O.R.P.H.",
+                                                  "Gustav Mahler",
+                                                  "Lady Gaga",
+                                                  "ReOrder",
+                                                  "Aly & Fila",
+                                                  "Craig Connelly",
+                                                  "Halsey",
+                                                  "John Williams",
+                                                  "Ilan Bluestone",
+                                                  "Johann Stauss II",
+                                                  "Andrew Rayel",
+                                                  "Giuseppe Ottaviani",
+                                                  "Super8 & Tab",
+                                                  "BT",
+                                                  "Cosmic Gate",
+                                                  "Ian Taylor"
+                                                  )) |> 
+  summarize(hours = sum(minutes) / 60) |> 
+  drop_na() |> 
+  ggplot(aes(x = date, y = hours, group = master_metadata_album_artist_name, 
+             colour = master_metadata_album_artist_name)) +
+  geom_line(size = 0.8) +  
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_date(breaks = "1 year", date_labels = "%Y") +
+  gghighlight(max(hours), max_highlight = 10,
+              use_direct_label = FALSE) +
+  scale_color_brewer("Artist", palette = "Paired")+
+  
+  labs(title = "Hours Listened to Top 20 Artists Over Time",
+       subtitle = "Top 10 Artists are Highlighted",
+       x = "Date", 
+       y = "Hours Listened",
+       colour = "Artist") +
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black"))
+```
+
+### <mark> __Reasons for Track Ends__ </mark>
+
+```{r}
+spotify |> 
+  drop_na(reason_end) |> 
+  mutate(reason_end = replace(reason_end, reason_end == "unknown", "Unknown"),
+         reason_end = replace(reason_end, reason_end == "", "Unknown"),
+         reason_end = replace(reason_end, reason_end == "unexpected-exit", "Misc"),
+         reason_end = replace(reason_end, reason_end == "unexpected-exit-while-paused", "Misc"),
+         reason_end = replace(reason_end, reason_end == "remote", "Misc"),
+         reason_end = replace(reason_end, reason_end == "trackerror", "Misc"),
+         reason_end = replace(reason_end, reason_end == "logout", "Misc"),
+         reason_end = replace(reason_end, reason_end == "popup", "Misc"),
+         reason_end = replace(reason_end, reason_end == "appload", "App Load"),
+         reason_end = replace(reason_end, reason_end == "backbtn", "Back Button"),
+         reason_end = replace(reason_end, reason_end == "fwdbtn", "Forward Button"),
+         reason_end = replace(reason_end, reason_end == "endplay", "Stop Button"),
+         reason_end = replace(reason_end, reason_end == "trackdone", "Track Done"),
+         reason_end = replace(reason_end, reason_end == "clickrow", "New Song"),
+         ) |> 
+  ggplot(aes(x = minutes)) + 
+  geom_histogram(aes(fill = reason_end), bins = 150) +
+  scale_x_continuous(limits = c(0,10), expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0), labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  scale_fill_brewer("Track End Reason", palette = "Paired")+
+  theme_bw() +
+  
+  labs(x = "Minutes Played",
+       y = "Track End Instances",
+       title = "Reason for Spotify Track Ends",
+       subtitle = "For songs played for 10 minutes or less"
+       ) +
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.width = unit(2.5, "lines"),
+        legend.key.height = unit(1, "lines"),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black")
+        )
+```
+
+### <mark> __References__ </mark>
+
+```{r, references, echo = TRUE}
+c("tidyverse", "jsonlite", "knitr", "gghighlight",
+  "hms", "lubridate", "here", "gt", "webshot", "janitor", "spotidy", "zoo", "extrafont", "ggtext", "ggiraph") %>%
+  map(citation) %>%
+  print(style = "text")
+```
+
