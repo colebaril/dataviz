@@ -1,5 +1,5 @@
 ---
-title: "Twitter Data"
+title: "Twitter: The End of an Era"
 author: "Cole Baril"
 date: "`r Sys.Date()`"
 output: 
@@ -47,7 +47,79 @@ twitter <- fromJSON(here("twitter/Data/tweet.json"), flatten = TRUE) |>
          year = year(date),
          time = as_hms(datetime),
          weekday = lubridate::wday(date, label = TRUE),
-         hour_floored = as_hms(floor_date(datetime, "hour")))
+         hour_floored = as_hms(floor_date(datetime, "hour"))) |> 
+  unnest_wider(col = tweet.display_text_range, names_sep = "_") 
+```
+
+```{r, info_card, fig.width = 15.5, fig.asp = .7, out.width = "90%"}
+
+
+
+
+
+data <- data.frame(
+  x = rep(1:3, times = 2), 
+  y = rep(2:1, each = 3),    
+  label = c(
+    paste0(
+      "<span style='color:#14171A; font-size:30px;'>Total Tweets</span><br><br>",
+      "<span style='color:#14171A; font-size:40px;'>", format(as.integer(nrow(twitter)), big.mark = ",", scientific = FALSE)
+    ),
+    
+    paste0(
+      "<span style='color:#14171A; font-size:30px;'>Days Spent Tweeting</span><br><br>",
+      "<span style='color:#14171A; font-size:40px;'>", format(length(unique(twitter$date)), big.mark = ",")
+    ),
+    
+    paste0(
+      "<span style='color:#14171A; font-size:30px;'>Characters Tweeted</span><br><br>",
+      "<span style='color:#14171A; font-size:40px;'>", 
+      format(sum(as.numeric(twitter$tweet.display_text_range_2)), big.mark = ",")
+    ),
+    
+     paste0(
+      "<span style='color:#14171A; font-size:30px;'>Interacted With</span><br><br>",
+      "<span style='color:#14171A; font-size:40px;'>", 
+      format(length(unique(twitter$tweet.in_reply_to_status_id_str)), big.mark = ","),
+      "<span style='color:#14171A; font-size:35px;'>", " accounts"
+    ),
+    
+    paste0(
+      "<span style='color:#14171A; font-size:30px;'>Received</span><br><br>",
+      "<span style='color:#14171A; font-size:40px;'>", 
+      format(sum(as.numeric(twitter$tweet.favorite_count)), big.mark = ","),
+       "<span style='color:#14171A; font-size:35px;'>", 
+       " favourites"
+    ),
+    
+     paste0(
+      "<span style='color:#14171A; font-size:30px;'>Received</span><br><br>",
+      "<span style='color:#14171A; font-size:40px;'>", 
+      format(sum(as.numeric(twitter$tweet.retweet_count)), big.mark = ","),
+       "<span style='color:#14171A; font-size:35px;'>", 
+       " retweets"
+      )
+    )
+  )
+
+
+ggplot(data) +
+  geom_rect(aes(xmin = x - 0.4, xmax = x + 0.4, ymin = y - 0.4, ymax = y + 0.4),
+            fill = "#1DA1F2", color = "#14171A", alpha = 0.5) +
+  geom_richtext(aes(x = x, y = y, label = label),
+                fill = NA, label.color = NA,  # Transparent background
+                size = 5, lineheight = 1.3, hjust = 0.5,
+                family = "Courier New", fontface = "bold") +
+  scale_x_continuous(expand = c(0, 0), limits = c(0.5, 3.5)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0.5, 2.5)) +
+  theme_void(base_family = "Courier New", base_size = 20) +
+  labs(title = "Twitter: The End of an Era",
+       subtitle = "2015 to 2024: 9 Years of Tweets Until I Left for Bluesky") +
+  theme(
+    plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 30),
+    plot.subtitle = element_text(hjust = 0.5)
+  ) 
 ```
 
 ### <mark> __Histogram__ </mark>
@@ -215,19 +287,15 @@ twitter %>%
         axis.line = element_line(colour = "black"))
 ```
 
-### <mark> __Tweet Heatmap__ </mark
+###  <mark> __Tweet Heatmap__ </mark>
 
-```{r, results = TRUE, fig.width = 10}
+```{r, heatmap, fig.width = 10}
 twitter |> 
-  summarize(n = n(),
-            .by = c(date, hour_floored, weekday)) |> 
-  mutate(year = format(date, "%Y")) |> 
-  summarize(n_tweets = sum(n),
+  summarize(n_tweets = n(),
             .by = c(hour_floored, weekday)) |> 
-  drop_na() |> 
   ggplot(aes(x = weekday, y = hour_floored, fill = n_tweets)) +
-  geom_tile(colour = "white", size = 0.1) + 
-  scale_fill_gradient(high = "#155A88", low = "#A6DFFC", labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  geom_tile(colour = "white", linewidth = 0.1) + 
+  scale_fill_gradient(high = "#155A88", low = "#A6DFFC", labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
    scale_y_time(breaks = scales::breaks_width("2 hours"), 
                labels = function(l) strftime(l, '%H:%M'),
                expand = c(0, 0)) +
@@ -250,6 +318,7 @@ twitter |>
         panel.border = element_blank()
   )
 ```
+
 
 ###  <mark> __Twitter Activity & Favourites__ </mark>
 
@@ -296,7 +365,6 @@ twitter |>
 
 ```{r}
 twitter |> 
-  unnest_wider(col = tweet.display_text_range, names_sep = "_") |> 
   ggplot(aes(x = date, y = as.numeric(tweet.display_text_range_2))) +
   geom_point(colour = "#1DA1F2",
              size = 1) +
@@ -342,4 +410,130 @@ twitter |>
         panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
         panel.border = element_blank(),
         axis.line = element_line(colour = "black"))
+```
+
+###  <mark> __Sentiment Frequency Analysis__ </mark>
+
+```{r}
+unclean_tweet <- twitter$tweet.full_text
+
+clean_tweets <- function(x) {
+  x %>%
+    # Remove URLs
+    str_remove_all(" ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)") %>%
+    # Remove mentions e.g. "@my_account"
+    str_remove_all("@[[:alnum:]_]{4,}") %>%
+    # Remove hashtags
+    str_remove_all("#[[:alnum:]_]+") %>%
+    # Replace "&" character reference with "and"
+    str_replace_all("&amp;", "and") %>%
+    # Remove puntucation, using a standard character class
+    str_remove_all("[[:punct:]]") %>%
+    # Remove "RT: " from beginning of retweets
+    str_remove_all("^RT:? ") %>%
+    # Replace any newline characters with a space
+    str_replace_all("\\\n", " ") %>%
+    # Make everything lowercase
+    str_to_lower() %>%
+    # Remove any trailing whitespace around the text
+    str_trim("both")
+}
+
+# Pass the clean_tweets function through tweets and convert to a tibble, retaining line (tweet) data.
+cleaned_tweets <- unclean_tweet %>% 
+  clean_tweets() %>% 
+  tibble(line = 1:nrow(twitter)) %>% 
+  rename_at(1, ~'text')
+
+# Extract words
+word_df <- cleaned_tweets %>% 
+  unnest_tokens(word, text)
+
+wordcount <- word_df %>% 
+  count(word)
+
+
+bing <- get_sentiments("bing")
+
+word_df %>%  
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sentiment) %>% 
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative) %>% 
+  ggplot(aes(x = word, y = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  labs(title = "Twitter Word Sentiment: Positive or Negative?",
+       subtitle = "The number of times each positive (e.g., > 0) and \nnegative (e.g., < 0) word was Tweeted.",
+       y = "Word Frequency",
+       x = "Word") +
+  
+  theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.title = element_text(hjust = 0.5),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line.y = element_line(colour = "black")
+        )
+```
+
+<!-- ###  <mark> __Sentiment Word Cloud__ </mark> -->
+
+```{r, include = FALSE, results = FALSE}
+word_df %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sentiment) %>% 
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>% 
+  comparison.cloud(colors = c("firebrick4", "forestgreen"),
+                   max.words = 100)
+
+```
+
+###  <mark> __NRC Sentiment Tree Map__ </mark>
+
+```{r}
+nrc <- get_sentiments("nrc")
+
+word_df %>% 
+  inner_join(get_sentiments("nrc")) %>% 
+  count(word, sentiment) %>% 
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  select_if(is.numeric) %>% 
+  map_dbl(sum) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("Emotion") %>% 
+  rename("number" = ".") %>% 
+  mutate(across(where(is.character), tools::toTitleCase)) %>% 
+  ggplot(aes(area = number, fill = Emotion, label = Emotion)) +
+  geom_treemap() + 
+  geom_treemap_text(colour = "Black", 
+                    place = "centre",
+                    size = 25) +
+  scale_fill_viridis_d(guide = "none") +
+  labs(title = "Emotion Frequency Based on Tweeted Words") +
+   theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.title = element_text(hjust = 0.5),
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line.y = element_line(colour = "black")
+        )
 ```
