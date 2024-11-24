@@ -187,7 +187,7 @@ twitter %>%
 ```{r}
 twitter %>% 
   summarize(n = n(),
-            .by = c(year, weekday, hour_floored)) %>% 
+            .by = c(year, weekday)) %>% 
   ggplot(aes(x = weekday, y = n)) + 
   geom_col(fill = "#1DA1F2", colour = "black") +
   labs(title = "Number of Tweets Sent during Days of the Week",
@@ -217,14 +217,14 @@ twitter %>%
 
 ### <mark> __Tweet Heatmap__ </mark
 
-```{r, fig.width = 10}
+```{r, results = TRUE, fig.width = 10}
 twitter |> 
   summarize(n = n(),
             .by = c(date, hour_floored, weekday)) |> 
   mutate(year = format(date, "%Y")) |> 
   summarize(n_tweets = sum(n),
             .by = c(hour_floored, weekday)) |> 
-  drop_na() |> # NA Weekday value of 181 dropped. 
+  drop_na() |> 
   ggplot(aes(x = weekday, y = hour_floored, fill = n_tweets)) +
   geom_tile(colour = "white", size = 0.1) + 
   scale_fill_gradient(high = "#155A88", low = "#A6DFFC", labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
