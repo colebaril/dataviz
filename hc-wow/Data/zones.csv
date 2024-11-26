@@ -1,0 +1,262 @@
+ID,Map Name,Map Type,Parent Map,Patch
+113,Northrend,Continent,Azeroth,3.4.0
+114,Borean Tundra,Zone,Northrend,3.4.0
+115,Dragonblight,Zone,Northrend,3.4.0
+116,Grizzly Hills,Zone,Northrend,3.4.0
+117,Howling Fjord,Zone,Northrend,3.4.0
+118,Icecrown,Zone,Northrend,3.4.0
+119,Sholazar Basin,Zone,Northrend,3.4.0
+120,The Storm Peaks,Zone,Northrend,3.4.0
+121,Zul'Drak,Zone,Northrend,3.4.0
+123,Wintergrasp,Zone,Northrend,3.4.0
+124,Plaguelands: The Scarlet Enclave,Orphan,Eastern Plaguelands,3.4.0
+125,Dalaran,Dungeon,Northrend,3.4.0
+126,Dalaran,Dungeon,Crystalsong Forest,3.4.0
+127,Crystalsong Forest,Zone,Northrend,3.4.0
+128,Strand of the Ancients,Orphan,Dragonblight,3.4.0
+129,The Nexus,Dungeon,Borean Tundra,3.4.0
+130,The Culling of Stratholme,Dungeon,Tanaris,3.4.0
+131,The Culling of Stratholme,Dungeon,The Culling of Stratholme,3.4.0
+132,Ahn'kahet: The Old Kingdom,Dungeon,Dragonblight,3.4.0
+133,Utgarde Keep,Dungeon,Howling Fjord,3.4.0
+134,Utgarde Keep,Dungeon,Howling Fjord,3.4.0
+135,Utgarde Keep,Dungeon,Howling Fjord,3.4.0
+136,Utgarde Pinnacle,Dungeon,Howling Fjord,3.4.0
+137,Utgarde Pinnacle,Dungeon,Howling Fjord,3.4.0
+138,Halls of Lightning,Dungeon,The Storm Peaks,3.4.0
+139,Halls of Lightning,Dungeon,The Storm Peaks,3.4.0
+140,Halls of Stone,Dungeon,The Storm Peaks,3.4.0
+141,The Eye of Eternity,Dungeon,Borean Tundra,3.4.0
+142,The Oculus,Orphan,Borean Tundra,3.4.0
+143,The Oculus,Dungeon,Borean Tundra,3.4.0
+144,The Oculus,Dungeon,Borean Tundra,3.4.0
+145,The Oculus,Dungeon,Borean Tundra,3.4.0
+146,The Oculus,Dungeon,Borean Tundra,3.4.0
+147,Ulduar,Dungeon,The Storm Peaks,3.4.0
+148,Ulduar,Dungeon,Ulduar,3.4.0
+149,Ulduar,Dungeon,Ulduar,3.4.0
+150,Ulduar,Dungeon,Ulduar,3.4.0
+151,Ulduar,Dungeon,Ulduar,3.4.0
+152,Ulduar,Dungeon,Ulduar,3.4.0
+153,Gundrak,Orphan,Zul'Drak,3.4.0
+154,Gundrak,Dungeon,Zul'Drak,3.4.0
+155,The Obsidian Sanctum,Orphan,Dragonblight,3.4.0
+156,Vault of Archavon,Dungeon,Wintergrasp,3.4.0
+157,Azjol-Nerub,Dungeon,Dragonblight,3.4.0
+158,Azjol-Nerub,Dungeon,Dragonblight,3.4.0
+159,Azjol-Nerub,Dungeon,Dragonblight,3.4.0
+160,Drak'Tharon Keep,Dungeon,Zul'Drak,3.4.0
+161,Drak'Tharon Keep,Dungeon,Zul'Drak,3.4.0
+162,Naxxramas,Dungeon,Dragonblight,3.4.0
+163,Naxxramas,Dungeon,Dragonblight,3.4.0
+164,Naxxramas,Dungeon,Dragonblight,3.4.0
+165,Naxxramas,Dungeon,Dragonblight,3.4.0
+166,Naxxramas,Dungeon,Dragonblight,3.4.0
+167,Naxxramas,Dungeon,Dragonblight,3.4.0
+168,The Violet Hold,Dungeon,Dalaran,3.4.0
+169,Isle of Conquest,Orphan,Icecrown,3.4.0
+170,Hrothgar's Landing,Zone,Northrend,3.4.0
+171,Trial of the Champion,Dungeon,Icecrown,3.4.0
+172,Trial of the Crusader,Dungeon,Icecrown,3.4.0
+173,Trial of the Crusader,Dungeon,Icecrown,3.4.0
+183,The Forge of Souls,Dungeon,Icecrown,3.4.0
+184,Pit of Saron,Orphan,Icecrown,3.4.0
+185,Halls of Reflection,Dungeon,Icecrown,3.4.0
+186,Icecrown Citadel,Dungeon,Icecrown,3.4.0
+187,Icecrown Citadel,Dungeon,Icecrown,3.4.0
+188,Icecrown Citadel,Dungeon,Icecrown,3.4.0
+189,Icecrown Citadel,Dungeon,Icecrown,3.4.0
+190,Icecrown Citadel,Dungeon,Icecrown,3.4.0
+191,Icecrown Citadel,Dungeon,Icecrown,3.4.0
+192,Icecrown Citadel,Dungeon,Icecrown,3.4.0
+193,Icecrown Citadel,Dungeon,Icecrown,3.4.0
+200,The Ruby Sanctum,Orphan,Dragonblight,3.4.0
+213,Ragefire Chasm,Dungeon,Orgrimmar,2.5.3
+219,Zul'Farrak,Orphan,Tanaris,2.5.3
+220,The Temple of Atal'Hakkar,Dungeon,Swamp of Sorrows,2.5.3
+221,Blackfathom Deeps,Dungeon,Ashenvale,2.5.3
+222,Blackfathom Deeps,Dungeon,Ashenvale,2.5.3
+223,Blackfathom Deeps,Dungeon,Ashenvale,2.5.3
+225,The Stockade,Dungeon,Stormwind City,2.5.3
+226,Gnomeregan,Dungeon,Dun Morogh,2.5.3
+227,Gnomeregan,Dungeon,Dun Morogh,2.5.3
+228,Gnomeregan,Dungeon,Dun Morogh,2.5.3
+229,Gnomeregan,Dungeon,Dun Morogh,2.5.3
+230,Uldaman,Dungeon,Badlands,2.5.3
+231,Uldaman,Dungeon,Badlands,2.5.3
+232,Molten Core,Dungeon,Burning Steppes,2.5.3
+233,Zul'Gurub,Orphan,Stranglethorn Vale,2.5.3
+234,Dire Maul,Orphan,Feralas,2.5.3
+235,Dire Maul,Dungeon,Feralas,2.5.3
+236,Dire Maul,Dungeon,Feralas,2.5.3
+237,Dire Maul,Dungeon,Feralas,2.5.3
+238,Dire Maul,Dungeon,Feralas,2.5.3
+239,Dire Maul,Dungeon,Feralas,2.5.3
+240,Dire Maul,Dungeon,Feralas,2.5.3
+242,Blackrock Depths,Dungeon,Searing Gorge,2.5.3
+243,Blackrock Depths,Dungeon,Searing Gorge,2.5.3
+246,The Shattered Halls,Dungeon,Hellfire Peninsula,2.5.1
+247,Ruins of Ahn'Qiraj,Orphan,Silithus,2.5.3
+248,Onyxia's Lair,Dungeon,Dustwallow Marsh,2.5.3
+250,Blackrock Spire,Dungeon,Burning Steppes,2.5.3
+251,Blackrock Spire,Dungeon,Burning Steppes,2.5.3
+252,Blackrock Spire,Dungeon,Burning Steppes,2.5.3
+253,Blackrock Spire,Dungeon,Burning Steppes,2.5.3
+254,Blackrock Spire,Dungeon,Burning Steppes,2.5.3
+255,Blackrock Spire,Dungeon,Burning Steppes,2.5.3
+256,Auchenai Crypts,Dungeon,Terokkar Forest,2.5.1
+257,Auchenai Crypts,Dungeon,Terokkar Forest,2.5.1
+258,Sethekk Halls,Dungeon,Terokkar Forest,2.5.1
+259,Sethekk Halls,Dungeon,Terokkar Forest,2.5.1
+260,Shadow Labyrinth,Dungeon,Terokkar Forest,2.5.1
+261,The Blood Furnace,Dungeon,Hellfire Peninsula,2.5.1
+262,The Underbog,Dungeon,Zangarmarsh,2.5.1
+263,The Steamvault,Dungeon,Zangarmarsh,2.5.1
+264,The Steamvault,Dungeon,Zangarmarsh,2.5.1
+265,The Slave Pens,Dungeon,Zangarmarsh,2.5.1
+266,The Botanica,Dungeon,Netherstorm,2.5.1
+267,The Mechanar,Dungeon,Netherstorm,2.5.1
+268,The Mechanar,Dungeon,Netherstorm,2.5.1
+269,The Arcatraz,Dungeon,Netherstorm,2.5.1
+270,The Arcatraz,Dungeon,Netherstorm,2.5.1
+271,The Arcatraz,Dungeon,Netherstorm,2.5.1
+272,Mana-Tombs,Dungeon,Terokkar Forest,2.5.1
+273,The Black Morass,Orphan,Tanaris,2.5.3
+274,Old Hillsbrad Foothills,Orphan,Tanaris,2.5.3
+279,Wailing Caverns,Dungeon,The Barrens,2.5.3
+280,Maraudon,Dungeon,Desolace,2.5.3
+281,Maraudon,Dungeon,Desolace,2.5.3
+287,Blackwing Lair,Dungeon,Burning Steppes,2.5.3
+288,Blackwing Lair,Dungeon,Burning Steppes,2.5.3
+289,Blackwing Lair,Dungeon,Burning Steppes,2.5.3
+290,Blackwing Lair,Dungeon,Burning Steppes,2.5.3
+291,The Deadmines,Dungeon,Westfall,2.5.3
+292,The Deadmines,Dungeon,Westfall,2.5.3
+300,Razorfen Downs,Dungeon,Thousand Needles,2.5.3
+301,Razorfen Kraul,Dungeon,The Barrens,2.5.3
+302,Scarlet Monastery,Dungeon,Tirisfal Glades,2.5.3
+303,Scarlet Monastery,Dungeon,Tirisfal Glades,2.5.3
+304,Scarlet Monastery,Dungeon,Tirisfal Glades,2.5.3
+305,Scarlet Monastery,Dungeon,Tirisfal Glades,2.5.3
+306,ScholomanceOLD,Dungeon,Western Plaguelands,2.5.3
+307,ScholomanceOLD,Dungeon,Western Plaguelands,2.5.3
+308,ScholomanceOLD,Dungeon,Western Plaguelands,2.5.3
+309,ScholomanceOLD,Dungeon,Western Plaguelands,2.5.3
+310,Shadowfang Keep,Dungeon,Silverpine Forest,2.5.3
+311,Shadowfang Keep,Dungeon,Silverpine Forest,2.5.3
+312,Shadowfang Keep,Dungeon,Silverpine Forest,2.5.3
+313,Shadowfang Keep,Dungeon,Silverpine Forest,2.5.3
+314,Shadowfang Keep,Dungeon,Silverpine Forest,2.5.3
+315,Shadowfang Keep,Dungeon,Silverpine Forest,2.5.3
+316,Shadowfang Keep,Dungeon,Silverpine Forest,2.5.3
+317,Stratholme,Dungeon,Eastern Plaguelands,2.5.3
+318,Stratholme,Dungeon,Eastern Plaguelands,2.5.3
+319,Ahn'Qiraj,Dungeon,Silithus,2.5.3
+320,Ahn'Qiraj,Dungeon,Silithus,2.5.3
+321,Ahn'Qiraj,Dungeon,Silithus,2.5.3
+329,Hyjal Summit,Orphan,Tanaris,2.5.3
+330,Gruul's Lair,Dungeon,Blade's Edge Mountains,2.5.1
+331,Magtheridon's Lair,Dungeon,Hellfire Peninsula,2.5.1
+332,Serpentshrine Cavern,Dungeon,Zangarmarsh,2.5.1
+333,Zul'Aman,Orphan,Ghostlands,2.5.3
+334,Tempest Keep,Dungeon,Netherstorm,2.5.1
+335,Sunwell Plateau,Dungeon,Isle of Quel'Danas,2.5.3
+336,Sunwell Plateau,Dungeon,Sunwell Plateau,2.5.3
+337,Zul'Gurub,Orphan,Stranglethorn Vale,2.5.3
+339,Black Temple,Dungeon,Shadowmoon Valley,2.5.1
+347,Hellfire Ramparts,Dungeon,Hellfire Peninsula,2.5.1
+350,Karazhan,Dungeon,Deadwind Pass,2.5.3
+351,Karazhan,Dungeon,Deadwind Pass,2.5.3
+352,Karazhan,Dungeon,Deadwind Pass,2.5.3
+353,Karazhan,Dungeon,Deadwind Pass,2.5.3
+354,Karazhan,Dungeon,Deadwind Pass,2.5.3
+355,Karazhan,Dungeon,Deadwind Pass,2.5.3
+356,Karazhan,Dungeon,Deadwind Pass,2.5.3
+357,Karazhan,Dungeon,Deadwind Pass,2.5.3
+358,Karazhan,Dungeon,Deadwind Pass,2.5.3
+359,Karazhan,Dungeon,Deadwind Pass,2.5.3
+360,Karazhan,Dungeon,Deadwind Pass,2.5.3
+361,Karazhan,Dungeon,Deadwind Pass,2.5.3
+362,Karazhan,Dungeon,Deadwind Pass,2.5.3
+363,Karazhan,Dungeon,Deadwind Pass,2.5.3
+364,Karazhan,Dungeon,Deadwind Pass,2.5.3
+365,Karazhan,Dungeon,Deadwind Pass,2.5.3
+366,Karazhan,Dungeon,Deadwind Pass,2.5.3
+946,Cosmic,Cosmic,,2.5.1
+947,Azeroth,World,Cosmic,1.13.2
+987,Outland,Continent,,2.5.1
+988,Northrend,Continent,,3.4.0
+1375,Halls of Stone,Dungeon,The Storm Peaks,3.4.0
+1411,Durotar,Zone,Kalimdor,1.13.2
+1412,Mulgore,Zone,Kalimdor,1.13.2
+1413,The Barrens,Zone,Kalimdor,1.13.2
+1414,Kalimdor,Continent,Azeroth,1.13.2
+1415,Eastern Kingdoms,Continent,Azeroth,1.13.2
+1416,Alterac Mountains,Zone,Eastern Kingdoms,1.13.2
+1417,Arathi Highlands,Zone,Eastern Kingdoms,1.13.2
+1418,Badlands,Zone,Eastern Kingdoms,1.13.2
+1419,Blasted Lands,Zone,Eastern Kingdoms,1.13.2
+1420,Tirisfal Glades,Zone,Eastern Kingdoms,1.13.2
+1421,Silverpine Forest,Zone,Eastern Kingdoms,1.13.2
+1422,Western Plaguelands,Zone,Eastern Kingdoms,1.13.2
+1423,Eastern Plaguelands,Zone,Eastern Kingdoms,1.13.2
+1424,Hillsbrad Foothills,Zone,Eastern Kingdoms,1.13.2
+1425,The Hinterlands,Zone,Eastern Kingdoms,1.13.2
+1426,Dun Morogh,Zone,Eastern Kingdoms,1.13.2
+1427,Searing Gorge,Zone,Eastern Kingdoms,1.13.2
+1428,Burning Steppes,Zone,Eastern Kingdoms,1.13.2
+1429,Elwynn Forest,Zone,Eastern Kingdoms,1.13.2
+1430,Deadwind Pass,Zone,Eastern Kingdoms,1.13.2
+1431,Duskwood,Zone,Eastern Kingdoms,1.13.2
+1432,Loch Modan,Zone,Eastern Kingdoms,1.13.2
+1433,Redridge Mountains,Zone,Eastern Kingdoms,1.13.2
+1434,Stranglethorn Vale,Zone,Eastern Kingdoms,1.13.2
+1435,Swamp of Sorrows,Zone,Eastern Kingdoms,1.13.2
+1436,Westfall,Zone,Eastern Kingdoms,1.13.2
+1437,Wetlands,Zone,Eastern Kingdoms,1.13.2
+1438,Teldrassil,Zone,Kalimdor,1.13.2
+1439,Darkshore,Zone,Kalimdor,1.13.2
+1440,Ashenvale,Zone,Kalimdor,1.13.2
+1441,Thousand Needles,Zone,Kalimdor,1.13.2
+1442,Stonetalon Mountains,Zone,Kalimdor,1.13.2
+1443,Desolace,Zone,Kalimdor,1.13.2
+1444,Feralas,Zone,Kalimdor,1.13.2
+1445,Dustwallow Marsh,Zone,Kalimdor,1.13.2
+1446,Tanaris,Zone,Kalimdor,1.13.2
+1447,Azshara,Zone,Kalimdor,1.13.2
+1448,Felwood,Zone,Kalimdor,1.13.2
+1449,Un'Goro Crater,Zone,Kalimdor,1.13.2
+1450,Moonglade,Zone,Kalimdor,1.13.2
+1451,Silithus,Zone,Kalimdor,1.13.2
+1452,Winterspring,Zone,Kalimdor,1.13.2
+1453,Stormwind City,Zone,Eastern Kingdoms,1.13.2
+1454,Orgrimmar,Zone,Kalimdor,1.13.2
+1455,Ironforge,Zone,Eastern Kingdoms,1.13.2
+1456,Thunder Bluff,Zone,Kalimdor,1.13.2
+1457,Darnassus,Zone,Kalimdor,1.13.2
+1458,Undercity,Zone,Eastern Kingdoms,1.13.2
+1459,Alterac Valley,Zone,Azeroth,1.13.2
+1460,Warsong Gulch,Zone,Azeroth,1.13.2
+1461,Arathi Basin,Zone,Azeroth,1.13.2
+1463,Eastern Kingdoms,Continent,,1.13.2
+1464,Kalimdor,Continent,,1.13.2
+1554,Serpentshrine Cavern,Dungeon,Zangarmarsh,2.5.1
+1555,Tempest Keep,Dungeon,Netherstorm,2.5.1
+1941,Eversong Woods,Zone,Eastern Kingdoms,2.5.1
+1942,Ghostlands,Zone,Eastern Kingdoms,2.5.1
+1943,Azuremyst Isle,Zone,Kalimdor,2.5.1
+1944,Hellfire Peninsula,Zone,Outland,2.5.1
+1945,Outland,Continent,Cosmic,2.5.1
+1946,Zangarmarsh,Zone,Outland,2.5.1
+1947,The Exodar,Zone,Kalimdor,2.5.1
+1948,Shadowmoon Valley,Zone,Outland,2.5.1
+1949,Blade's Edge Mountains,Zone,Outland,2.5.1
+1950,Bloodmyst Isle,Zone,Kalimdor,2.5.1
+1951,Nagrand,Zone,Outland,2.5.1
+1952,Terokkar Forest,Zone,Outland,2.5.1
+1953,Netherstorm,Zone,Outland,2.5.1
+1954,Silvermoon City,Zone,Eastern Kingdoms,2.5.1
+1955,Shattrath City,Zone,Outland,2.5.1
+1956,Eye of the Storm,Zone,Netherstorm,2.5.1
+1957,Isle of Quel'Danas,Zone,Eastern Kingdoms,2.5.1
+2104,Wintergrasp,Zone,Azeroth,3.4.0
