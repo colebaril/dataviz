@@ -36,9 +36,23 @@ body, p, h1, h2, h3, h4, h5, h6 {
 
 
 ```{r, import_clean}
-twitter <- fromJSON(here("twitter/Data/tweet.json"), flatten = TRUE) |> 
-  mutate(across(.cols = c(tweet.favorite_count, tweet.retweet_count), ~ as.numeric(.))) |> 
-  mutate(statusreply = case_when(is.na(tweet.in_reply_to_status_id) ~ "Yes",
+# twitter <- fromJSON(here("twitter/Data/tweet.json"), flatten = TRUE) |> 
+#   mutate(across(.cols = c(tweet.favorite_count, tweet.retweet_count), ~ as.numeric(.))) |> 
+#   mutate(statusreply = case_when(is.na(tweet.in_reply_to_status_id) ~ "Yes",
+#                              TRUE ~ "No")) |> 
+#   mutate(datetime = parse_date_time(tweet.created_at, "a b d H:M:S z Y", tz = "UTC"),
+#          datetime = with_tz(datetime, "America/Chicago"),
+#          date = date(datetime),
+#          month = month(date),
+#          year = year(date),
+#          time = as_hms(datetime),
+#          weekday = lubridate::wday(date, label = TRUE),
+#          hour_floored = as_hms(floor_date(datetime, "hour"))) |> 
+#   unnest_wider(col = tweet.display_text_range, names_sep = "_") 
+
+twitter <- fromJSON(here("twitter/Data/new_tweet1.js"), flatten = TRUE) |> 
+   mutate(across(.cols = c(tweet.favorite_count, tweet.retweet_count), ~ as.numeric(.))) |> 
+   mutate(statusreply = case_when(is.na(tweet.in_reply_to_status_id) ~ "Yes",
                              TRUE ~ "No")) |> 
   mutate(datetime = parse_date_time(tweet.created_at, "a b d H:M:S z Y", tz = "UTC"),
          datetime = with_tz(datetime, "America/Chicago"),
@@ -164,28 +178,29 @@ twitter |>
   geom_point(colour = "#1DA1F2", size = 1) +
   geom_vline(
     xintercept = date("2022-04-14"), color = "red",  
-    linetype = "dashed", size = 1, alpha = 0.5) +
+    linetype = "dashed", size = 1) +
    annotate("text", 
            x = date("2022-04-01"), 
            y = hm("12:00"), 
            label = 'atop(bold("Musk Buys Twitter"))',
            colour = "red",
-           alpha = 0.5,
            parse = TRUE,
-           angle = 90
+           angle = 90,
+           size = 5
            ) +
   
    geom_vline(
     xintercept = date("2024-11-15"), color = "black",  
-    linetype = "dashed", size = 1, alpha = 0.5) +
+    linetype = "dashed", size = 1) +
    annotate("text", 
            x = date("2024-11-01"), 
            y = hm("12:00"), 
            label = 'atop(bold("I joined Bluesky"))',
            colour = "black",
-           alpha = 0.5,
+
            parse = TRUE,
-           angle = 90
+           angle = 90,
+           size = 5
            ) +
   
   scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = c(0, 0)) +
@@ -215,6 +230,8 @@ twitter |>
         panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
         panel.border = element_blank(),
         axis.line = element_line(colour = "black"))
+
+ggsave("tweets_by_me.png", plot = last_plot(), width = 12,, height = 9, dpi = 500)
   
 ```
 
@@ -320,7 +337,9 @@ twitter |>
 ```
 
 
-###  <mark> __Twitter Activity & Favourites__ </mark>
+###  <mark> __Twitter Activity: Favourites & Retweets__ </mark> {.tabset}
+
+#### Favourites
 
 ```{r}
 twitter |> 
@@ -332,8 +351,9 @@ twitter |>
   
   scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = c(0, 0)) +
   scale_y_time(breaks = scales::breaks_width("4 hours"), 
-               labels = function(l) strftime(l, '%H:%M'),
-               expand = c(0, 0)) +
+               labels = function(l) strftime(l, '%H:%M')
+               # expand = c(0, 0)
+               ) +
   scale_size("Number of Favourites", range = c(1, 15)) +
   labs(title = "Tweets by Me: Number of Favourites",
        subtitle = "1 dot = 1 Tweet",
@@ -360,6 +380,49 @@ twitter |>
   guides(size = guide_legend(nrow = 1),
          colour = guide_legend(override.aes = list(size = 10)))
 ```
+
+#### Retweets
+
+```{r}
+twitter |> 
+  ggplot(aes(x = date, y = time)) +
+  geom_point(aes(color = statusreply, size = tweet.retweet_count), ) +
+    scale_colour_manual("Status or Reply?",
+    labels = c("Reply", "Status"),
+    values = c("black", "#1DA1F2")) +
+  
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = c(0, 0)) +
+  scale_y_time(breaks = scales::breaks_width("4 hours"), 
+               labels = function(l) strftime(l, '%H:%M')
+               # expand = c(0, 0)
+               ) +
+  scale_size("Number of Retweets", range = c(1, 15)) +
+  labs(title = "Tweets by Me: Number of Retweets",
+       subtitle = "1 dot = 1 Tweet",
+       x = "Date",
+       y = "Local Time") +
+
+   theme_bw(base_size = 20, base_family = "Courier New") +
+  theme(panel.grid.major.x = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "top",
+        legend.title.position = "top",
+        legend.title = element_text(hjust = 0.5),
+        legend.key.size = unit(3, "point"),
+
+        legend.background = element_rect(fill = "#f5f5f2"),
+        plot.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.background = element_rect(fill = "#f5f5f2", color = "#f5f5f2"),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black")) +
+  guides(size = guide_legend(nrow = 1),
+         colour = guide_legend(override.aes = list(size = 10)))
+```
+
 
 ###  <mark> __Tweet Length__ </mark>
 
