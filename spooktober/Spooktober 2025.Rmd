@@ -1,0 +1,381 @@
+---
+title: 'Spooktober 2025: Data After Dark'
+author: "Cole Baril"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: cosmo
+    toc: false
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(fig.width = 12, fig.asp = .7, out.width = "90%", echo = FALSE, warning = FALSE, message = FALSE)
+
+require(pacman)
+p_load(spellbook, tidyverse, janitor, here, showtext, tidytext, wordcloud2, tm, grDevices,
+       usmap, ggrepel, tidygeocoder, sf, rnaturalearth, rnaturalearthdata, png, grid)
+options(scipen = 999)
+```
+
+<style>
+mark {
+  background-color: #251a47; /* Purple background */
+  color: #e9731d; /* White text color for contrast */
+  padding: 0.2em; /* Optional: add some padding for better visual appearance */
+  border-radius: 3px; /* Optional: add rounded corners */
+}
+</style>
+
+
+<style>
+   blockquote {
+   background-color: #e9731d;
+   color: black;
+   font-weight: bold;
+  }
+ </style>
+
+
+
+### <mark> __🎃 Spooktober 2025 🎃__ </mark>
+
+<img src="D:/Projects/dataviz/spooktober/promotional_image.png" align="right" width="25%" style="margin: 0 0 1em 1em;"/>
+
+Welcome to Spooktober, a month-long data visualization project where each day of October conjures a brand-new, spooky-themed plot. Using R and ggplot2, I’ll be exploring playful, eerie, and sometimes chilling datasets reimagined through color, theme, and story.
+
+The goal of this project is two fold:
+
+1. To celebrate the art of data visualization through a seasonal, Halloween-inspired lens.
+2. To challenge myself to create 31 distinct visualizations in 31 days.
+
+Expect plenty of black cats, haunted forests, pumpkins, cobwebs, ghosts, and bats woven not in words, but in data.
+
+Enter if you dare…
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+### <mark> __🎃 October 1: Horror Movie Release Dates 🎃__ </mark>
+
+<br>
+
+```{r, oct1, fig.showtext = TRUE, fig.width = 9}
+horror_movies <- read_csv(here("spooktober/Data/horror_movies.csv")) |> select(-1) |> 
+  drop_na(release_date) |> 
+  mutate(release_date = as.Date(release_date),
+         year = year(release_date),
+         month = month(release_date, label = TRUE, abbr = TRUE),
+         day = day(release_date)
+  )
+
+release_counts <- horror_movies |> 
+  count(year, month) 
+
+pumpkin_gradient <- c("#FFD8B1", "#FFA500", "#FF8C00", "#FF4500", "#CC3700")
+
+ggplot(release_counts |> filter(year >= 1980), aes(x = month, y = year, fill = n)) +
+  geom_tile(color = "white") +
+  scale_fill_gradientn("Number of Horror Movies", colours = pumpkin_gradient) +
+  scale_y_continuous(breaks = seq(min(release_counts$year, na.rm = TRUE),
+                                  max(release_counts$year, na.rm = TRUE),
+                                  by = 10),
+                     expand = c(.01, .01)) +
+  labs(title = "Calendar of Creeps: Horror Releases by Month", x = "Month", y = "Year") +
+  theme_bw(base_size = 12) +
+  theme_parchment(remove_grid = TRUE) +
+  inscribe(include_data_source = TRUE, data_source = "The Movie Database") 
+
+```
+
+> As expected, there are more horror movie releases in October, particularly beginning in the 2000s. From 2010 to present, this trend is amplified. What I did not expect to find was a consistent number of horror movie releases in January. I learned that this trend is likely due to [Dump Months](https://en.wikipedia.org/wiki/Dump_months) in which movies that performed poorly at test screenings, movies with lesser known actors, or less popular genres (e.g., horror) are released. The rationale for this is primarily because audiences are lower and inconsistent in January and February compared to holiday months.
+
+### <mark> __🎃 October 2: Horror Movie Title Word Cloud 🎃__ </mark>
+
+<br> 
+
+```{r, horror_movie_word_cloud}
+autumn <- colorRampPalette(c("#FF0000", "#ffcc00"))(150)
+
+set.seed(123)
+autumn_random <- sample(autumn, size = 150)
+
+movie_words <- horror_movies |>  
+  select(title) |> 
+  mutate(title = str_to_lower(title),
+         title = str_replace_all(title, "[^a-z\\s]", "")) |> 
+  unnest_tokens(word, title) |> 
+  filter(!word %in% stopwords("en")) |> 
+  filter(str_length(word) > 2) |> 
+  filter(!word %in% c("ii", "iii", "iv"))
+
+word_counts <- movie_words %>%
+  count(word, sort = TRUE)
+
+wordcloud2(head(word_counts, 150), size = 0.8, color = autumn_random, backgroundColor = "black")
+```
+
+### <mark> __🎃 October 3: Haunted Places 🎃__ </mark>
+
+```{r, us_haunted_states, fig.showtext = TRUE}
+states <- usmap::statepop |> select(full) |> pull()
+statepop <- usmap::statepop
+
+haunted_states <- read_csv(here("spooktober/Data/haunted_places.csv")) |> 
+  filter(state %in% states) |> 
+  reframe(n = n(),
+          .by = state) |> 
+  left_join(statepop, by = c("state" = "full")) |> 
+  mutate(hpc = n / pop_2022)
+
+purple <- colorRampPalette(c("#ecb3ff", "#4b0066"))(50)
+
+
+plot_usmap(data = haunted_states, regions = "states", values = "n") +
+  scale_fill_gradientn("Number of Haunted Places", colors = purple) +
+  theme(plot.title = element_text(face = "bold", size = 25, hjust = 0.5),
+      plot.subtitle = element_text(size = 15, hjust = 0.5),
+      plot.caption = element_text(size = 12),
+      legend.position = "top",
+      legend.key.width = unit(3, "lines"),
+      legend.title = element_text(face = "bold", size = 15, hjust = 0.5),
+      legend.title.position = "top",
+      legend.text = element_text(size = 12)) +
+  labs(title = "Number of Haunted Places by State") +
+  inscribe(include_data_source = TRUE, data_source = "The Shadowlands Haunted Places Index")
+
+
+
+# Are the number of proported haunted places comparable to population or area?
+top_states <- haunted_states |> 
+  dplyr::slice_max(n, n = 10)
+
+haunted_states |> 
+  ggplot(aes(x = pop_2022, y = n)) +
+  
+  geom_label_repel(
+    data = top_states,
+    aes(label = abbr),
+    size = 5,
+    fill = "forestgreen",      
+    color = "black",
+    fontface = "bold",
+    box.padding = 0.5,    
+    point.padding = 0.3,  
+    segment.color = "gray40", 
+    segment.size = 0.5,
+    force = 1,
+    alpha = .6
+  ) +
+  geom_point(alpha = 0.6, size = 4, colour = "#F87217") +
+  scale_x_continuous(trans = "log10", 
+                     labels = scales::label_number(scale = 1e-6, suffix = "M")) +
+  theme_parchment(remove_grid = TRUE) +
+   theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        plot.title = element_text(margin = margin(t = 40, b = -30), hjust = 0.1, vjust = -5, size = 40)
+        ) +
+  labs(title = "Hauntings Rise \nwith the Masses",
+       x = "State Population",
+       y = "Number of Haunted Places") +
+  inscribe(include_data_source = TRUE, data_source = "The Shadowlands Haunted Places Index") 
+
+# Per capita
+top_states_hpc <- haunted_states |> 
+  dplyr::slice_max(hpc, n = 10)
+
+haunted_states |> 
+  ggplot(aes(x = pop_2022, y = hpc, size = n)) +
+  
+  geom_label_repel(
+    data = top_states_hpc,
+    aes(label = abbr),
+    size = 5,
+    fill = "forestgreen",      
+    color = "black",
+    fontface = "bold",
+    box.padding = 0.5,    
+    point.padding = 0.3,  
+    segment.color = "gray40", 
+    segment.size = 0.5,
+    force = 2,
+    alpha = .6
+  ) +
+  geom_point(alpha = 0.6, colour = "#F87217") +
+  scale_x_continuous(trans = "log10", 
+                     labels = scales::label_number(scale = 1e-6, suffix = "M")) +
+  scale_y_continuous(labels = scales::label_percent()) +
+    scale_size_continuous(
+    name = "Number of Haunted Places",
+    range = c(4, 12)) +
+  theme_parchment(remove_grid = TRUE) +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        plot.title = element_text(margin = margin(t = 40, b = -30), hjust = 0.5, vjust = -5, size = 40),
+        legend.position = "inside",
+        legend.position.inside = c(0.5, 0.75)
+        ) +
+  labs(title = "Density of the Damned: \nFewer People, More Ghosts",
+       x = "State Population",
+       y = "Haunted Places per Capita (%)") +
+  inscribe(include_data_source = TRUE, data_source = "The Shadowlands Haunted Places Index") +
+  guides(size = guide_legend(nrow = 1))
+
+
+```
+
+https://www.theshadowlands.net/places/
+
+### <mark> __🎃 October 4: Pumpkin Production US 🎃__ </mark>
+
+https://en.wikipedia.org/wiki/Hundredweight
+
+National Agricultural Statistics Service
+
+### <mark> __🎃 October 5: Pumpkin Production US 🎃__ </mark>
+
+Candy Data
+
+### <mark> __🎃 October 6: Spirit Halloween 🎃__ </mark>
+
+```{r, fig.showtext = TRUE}
+
+# Load Spirit Halloween store data
+spirit_halloween <- read_csv(here("spooktober/Data/spirit_halloween_stores_geocoded.csv")) |>
+  select(-1)
+
+spirit_sf <- st_as_sf(spirit_halloween,
+                      coords = c("long", "lat"),
+                      crs = 4326)
+
+# Load world map
+world <- ne_countries(scale = "large", returnclass = "sf")
+
+# Filter to US & Canada
+na_map <- world %>%
+  filter(admin %in% c("United States of America", "Canada"))
+
+usa <- na_map %>% filter(admin == "United States of America")
+canada <- na_map %>% filter(admin == "Canada")
+
+# Crop USA to remove Alaska and Hawaii (keep only mainland)
+usa_mainland <- st_crop(usa, xmin = -125, xmax = -66, ymin = 24, ymax = 50)
+
+# Combine mainland USA + Canada
+na_mainland <- rbind(usa_mainland, canada)
+
+# Transform store data to match mainland CRS
+spirit_mainland <- st_transform(spirit_sf, st_crs(2163))
+
+# US states
+us_states <- ne_states(country = "United States of America", returnclass = "sf") |> filter(name != "Alaska")
+
+# Canadian provinces
+ca_provinces <- ne_states(country = "Canada", returnclass = "sf")
+
+# ---- Mainland map ----
+mainland <- ggplot() +
+  geom_sf(data = na_mainland, fill = "gray95", color = "gray70") +
+  geom_sf(data = us_states, fill = NA, color = "black", size = 0.3) +  # US states
+  geom_sf(data = ca_provinces, fill = NA, color = "black", size = 0.3) + # Canada provinces
+  geom_sf(data = spirit_mainland |> filter(region != "AK"), aes(size = n),
+          shape = 21, fill = "purple", color = "black",
+          alpha = 0.6) +
+  coord_sf(crs = st_crs(2163),
+           xlim = c(-2500000, 3200000),
+           ylim = c(-2300000, 4000000)) +
+  scale_size_continuous(range = c(2, 10), name = "Number of Spirit \nHalloween Stores")
+
+# ---- Alaska inset ----
+alaska_map <- ggplot() +
+  geom_sf(data = usa, fill = "gray95", color = "gray70") +
+  geom_sf(data = st_transform(spirit_sf, st_crs(3467)),
+          aes(size = n), shape = 21, fill = "purple", color = "black",
+          alpha = 0.6, show.legend = FALSE) +
+  coord_sf(crs = st_crs(3467),
+           xlim = c(-2400000, 1600000),
+           ylim = c(200000, 2500000),
+           expand = FALSE, datum = NA) +
+  scale_size_continuous(range = c(2, 10)) +
+    theme(
+    panel.background = element_rect(fill = NA),
+    plot.background = element_rect(fill = NA),
+    panel.border = element_blank()
+  )
+
+# ---- Hawaii inset ----
+hawaii_map <- ggplot() +
+  geom_sf(data = usa, fill = "gray95", color = "gray70") +
+  geom_sf(data = st_transform(spirit_sf, st_crs(4135)),
+          aes(size = n), alpha = 0.6, shape = 21, fill = "purple", color = "black",
+          show.legend = FALSE) +
+  coord_sf(crs = st_crs(4135),
+           xlim = c(-161, -154),
+           ylim = c(18, 23),
+           expand = FALSE, datum = NA) +
+  scale_size_continuous(range = c(2, 10)) +
+    theme(
+    panel.background = element_rect(fill = NA),
+    plot.background = element_rect(fill = NA),
+    panel.border = element_blank()
+  )
+
+# ---- Combine with insets ----
+final_map <- mainland +
+  annotation_custom(
+    grob = ggplotGrob(alaska_map),
+    xmin = -2750000,
+    xmax = -2750000 + (1600000 - (-2400000)) / 2.5,
+    ymin = -2450000,
+    ymax = -2450000 + (2500000 - 200000) / 2.5
+  ) +
+  annotation_custom(
+    grob = ggplotGrob(hawaii_map),
+    xmin = -1250000,
+    xmax = -1250000 + (-154 - (-161)) * 120000,
+    ymin = -2450000,
+    ymax = -2450000 + (23 - 18) * 120000
+  )
+
+# Read the PNG image
+logo <- readPNG(here("spooktober/spirit_logo.png"))
+
+# Convert to a raster grob
+logo_grob <- rasterGrob(logo, interpolate = TRUE)
+
+final_map +
+  theme_void() +
+   theme(
+        plot.title = element_text(hjust = 0.5, size = 35, face = "bold"),
+        legend.position = "inside",
+        legend.position.inside = c(0.85, 0.75),
+        legend.key.width = unit(4, "lines"),
+        legend.title = element_text(face = "bold", size = 15, hjust = 0.5),
+        legend.text = element_text(size = 12) 
+        ) +
+    annotation_custom(
+        logo_grob,
+        xmin = 1.4e6,   # far left
+        xmax = 2.6e6,   # far right
+        ymin = 3.2e6,   # lower
+        ymax = 4.1e6    # upper
+      ) +
+  inscribe(type = "plot", include_data_source = TRUE, data_source = "Spirit Halloween")
+
+
+```
+
+
+
+
