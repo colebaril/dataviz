@@ -22,11 +22,14 @@ options(scipen = 999)
 # Load grobs for use in plots
 
 bat_grob <- rasterGrob(readPNG(here("spooktober/Images/bat.png")), interpolate = TRUE)
+bats_moon_grob <- rasterGrob(readPNG(here("spooktober/Images/bats_moon.png")), interpolate = TRUE)
 ghost_grob <- rasterGrob(readPNG(here("spooktober/Images/ghost.png")), interpolate = TRUE)
 pumpkin_grob <- rasterGrob(readPNG(here("spooktober/Images/pumpkin.png")), interpolate = TRUE)
 decorations_grob <- rasterGrob(readPNG(here("spooktober/Images/garland.png")), interpolate = TRUE)
 pumpkin_candy_grob <- rasterGrob(readPNG(here("spooktober/Images/pumpkin basket.png")), interpolate = TRUE)
 witch_grob <- rasterGrob(readPNG(here("spooktober/Images/witch.png")), interpolate = TRUE)
+hhouse_grob <- rasterGrob(readPNG(here("spooktober/Images/haunted-house.png")), interpolate = TRUE)
+hhouse_ghost_grob <- rasterGrob(readPNG(here("spooktober/Images/haunted-house_ghost.png")), interpolate = TRUE)
 ```
 
 <style>
@@ -145,7 +148,7 @@ horror_movies |>
 
 <br> 
 
-```{r, horror_movie_word_cloud, eval = TRUE}
+```{r, horror_movie_word_cloud, eval = TRUE, echo = TRUE}
 autumn <- colorRampPalette(c("#FF0000", "#ffcc00"))(150)
 
 set.seed(123)
@@ -160,15 +163,15 @@ movie_words <- horror_movies |>
   filter(str_length(word) > 2) |> 
   filter(!word %in% c("ii", "iii", "iv"))
 
-word_counts <- movie_words %>%
+word_counts <- movie_words |> 
   count(word, sort = TRUE)
 
 wordcloud2(head(word_counts, 150), size = 0.8, color = autumn_random, backgroundColor = "black")
 ```
-<!--
+
 ### <mark> __🎃 October 3: Haunted Places 🎃__ </mark>
--->
-```{r, us_haunted_states, fig.showtext = TRUE, eval = FALSE}
+
+```{r, us_haunted_states, fig.showtext = TRUE, eval = TRUE, echo = TRUE}
 states <- usmap::statepop |> select(full) |> pull()
 statepop <- usmap::statepop
 
@@ -201,16 +204,18 @@ plot_usmap(data = haunted_states, regions = "states", values = "n") +
     xmin = -2500000, xmax = -1900000,  
     ymin =  300000,  ymax = 900000) +     
   inscribe(include_data_source = TRUE, data_source = "The Shadowlands Haunted Places Index")
+```
 
+> Interestingly, California and Texas have the highest number of haunted places. I wondered if the number
+of haunted places in a state was related to its population, and sure enough it was. 
 
-
+```{r, us_haunted_states_2, fig.showtext = TRUE, eval = TRUE, echo = TRUE}
 # Are the number of proported haunted places comparable to population or area?
 top_states <- haunted_states |> 
-  dplyr::slice_max(n, n = 10)
+  slice_max(n, n = 10)
 
 haunted_states |> 
   ggplot(aes(x = pop_2022, y = n)) +
-  
   geom_label_repel(
     data = top_states,
     aes(label = abbr),
@@ -223,10 +228,13 @@ haunted_states |>
     segment.color = "gray40", 
     segment.size = 0.5,
     force = 1,
-    alpha = .6
-  ) +
+    alpha = .6) +
   geom_point(alpha = 0.6, size = 4, colour = "#F87217") +
-  scale_x_continuous(trans = "log10", 
+   annotation_custom(
+    bats_moon_grob,
+    xmin = 4000000, xmax = 8000000,
+    ymin = 900, ymax = 1100) +
+  scale_x_continuous(trans = "log1p",
                      labels = scales::label_number(scale = 1e-6, suffix = "M")) +
   theme_parchment(remove_grid = TRUE) +
    theme(axis.title = element_text(size = 14),
@@ -235,8 +243,9 @@ haunted_states |>
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
-        plot.title = element_text(margin = margin(t = 40, b = -30), hjust = 0.1, vjust = -5, size = 40)
-        ) +
+        plot.title = element_text(margin = margin(t = 0, b = -30), hjust = 0.1, vjust = -5, size = 40),
+        plot.margin = margin(t = 0, r = 10, b = 10, l = 10)) +
+  
   labs(title = "Hauntings Rise \nwith the Masses",
        x = "State Population",
        y = "Number of Haunted Places") +
@@ -244,11 +253,10 @@ haunted_states |>
 
 # Per capita
 top_states_hpc <- haunted_states |> 
-  dplyr::slice_max(hpc, n = 10)
+  slice_max(hpc, n = 10)
 
 haunted_states |> 
   ggplot(aes(x = pop_2022, y = hpc, size = n)) +
-  
   geom_label_repel(
     data = top_states_hpc,
     aes(label = abbr),
@@ -261,10 +269,13 @@ haunted_states |>
     segment.color = "gray40", 
     segment.size = 0.5,
     force = 2,
-    alpha = .6
-  ) +
+    alpha = .6) +
   geom_point(alpha = 0.6, colour = "#F87217") +
-  scale_x_continuous(trans = "log10", 
+     annotation_custom(
+    hhouse_ghost_grob,
+    xmin = 20000000, xmax = 40000000,
+    ymin = 0.000055, ymax = 0.0001) +
+  scale_x_continuous(trans = "log1p",
                      labels = scales::label_number(scale = 1e-6, suffix = "M")) +
   scale_y_continuous(labels = scales::label_percent()) +
     scale_size_continuous(
@@ -279,8 +290,7 @@ haunted_states |>
         panel.border = element_blank(),
         plot.title = element_text(margin = margin(t = 40, b = -30), hjust = 0.5, vjust = -5, size = 40),
         legend.position = "inside",
-        legend.position.inside = c(0.5, 0.75)
-        ) +
+        legend.position.inside = c(0.5, 0.75)) +
   labs(title = "Density of the Damned: \nFewer People, More Ghosts",
        x = "State Population",
        y = "Haunted Places per Capita (%)") +
@@ -289,6 +299,11 @@ haunted_states |>
 
 
 ```
+
+> However, interestingly, when I grahped the number of haunted places *per capita*, the graph completely reversed: 
+there are more haunted places per capita in the least populous states. 
+
+
 <!--
 ### <mark> __🎃 October 4: Pumpkin Production US 🎃__ </mark>
 
