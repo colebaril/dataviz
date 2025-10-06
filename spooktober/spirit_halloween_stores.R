@@ -14,14 +14,14 @@ get_city_codes <- function(region) {
   url <- paste0("https://stores.spirithalloween.com/", region, "/")
   page <- read_html(url)
   
-  city_codes <- page %>%
-    html_elements(".is-single .gaq-link") %>%
-    html_attr("href") %>%
-    str_remove_all("^/|/$") %>%
-    str_split("/") %>%
-    sapply(function(x) x[length(x)]) %>%
+  city_codes <- page |>
+    html_elements(".is-single .gaq-link") |>
+    html_attr("href") |>
+    str_remove_all("^/|/$") |>
+    str_split("/") |>
+    sapply(function(x) x[length(x)]) |>
     unique()
-  
+   
   return(city_codes)
 }
 
@@ -36,9 +36,9 @@ get_stores <- function(region, city) {
   url <- paste0("https://stores.spirithalloween.com/", region, "/", city, "/")
   page <- read_html(url)
   
-  stores <- page %>%
-    html_elements(".map-list-item-wrap") %>%
-    html_text2() %>%
+  stores <- page |>
+    html_elements(".map-list-item-wrap") |>
+    html_text2() |>
     str_squish()
   
   if(length(stores) == 0) {
@@ -77,7 +77,7 @@ spirit_halloween <- read_csv(here("spooktober/Data/spirit_halloween_stores.csv")
   summarise(n = n(),
             .by = c("region", "city"))
 
-geo_results <- spirit_halloween %>%
+geo_results <- spirit_halloween |>
   geocode(city = city, state = region, method = "osm")
 
 geo_results_fail <- geo_results |> 
@@ -168,9 +168,9 @@ clean_city_name <- function(city, clean_vector) {
   clean_vector[which.min(distances)]
 }
 
-df_clean <- geo_results_fail %>%
-  rowwise() %>%
-  mutate(city_clean = clean_city_name(city, clean_cities)) %>%
+df_clean <- geo_results_fail |>
+  rowwise() |>
+  mutate(city_clean = clean_city_name(city, clean_cities)) |>
   ungroup() |> 
   mutate(dist = stringdist(city, city_clean, method = "osa")) |> 
   select(region, city_clean, n) |> 
@@ -179,7 +179,7 @@ df_clean <- geo_results_fail %>%
 geo_results <- geo_results |> 
   filter(!is.na(lat)) 
 
-geo_results_repeats <- df_clean %>%
+geo_results_repeats <- df_clean |>
   geocode(city = city, state = region, method = "osm")
 
 geo_results_rep2 <- geo_results_repeats |> 

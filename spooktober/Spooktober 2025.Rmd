@@ -144,8 +144,6 @@ horror_movies |>
 
 > Interestingly, the January Dump Month trend, in addition to the rationale behind them, is confirmed by looking at the mean movie popularity each month. January releases have the worst popularity, while the most popular horror movies are released in the summer months. October has a comparably smaller mean popularity compared to summer, but this is likely due to the fact that so many more horror movies are released in October than in any other month. 
 
-
-
 ### <mark> __🎃 October 2: Horror Movie Title Word Cloud 🎃__ </mark>
 
 <br> 
@@ -493,7 +491,7 @@ ggraph(g, layout = "fr") +
 ```
 
 
-### <mark> __🎃 October 6: Spirit Halloween 🎃__ </mark>
+### <mark> __🎃 October 6: Spirit Halloween Store Locations 🎃__ </mark>
 
 ```{r, fig.showtext = TRUE, eval = TRUE, echo = TRUE}
 
