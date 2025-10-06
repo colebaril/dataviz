@@ -9,13 +9,13 @@ output:
     toc: false
 ---
 
-```{r setup, include = FALSE, echo = FALSE}
+```{r setup, include = TRUE, echo = FALSE, message = FALSE}
 knitr::opts_chunk$set(fig.width = 12, fig.asp = .7, out.width = "90%", echo = FALSE, warning = FALSE, message = FALSE)
 
 require(pacman)
 p_load(spellbook, tidyverse, janitor, here, showtext, tidytext, wordcloud2, tm, grDevices,
        usmap, ggrepel, tidygeocoder, sf, rnaturalearth, rnaturalearthdata, png, grid, igraph, ggraph,
-       ggridges, ggside)
+       ggridges, ggside, ggnewscale, gganimate, gifski)
 
 options(scipen = 999)
 
@@ -30,6 +30,8 @@ pumpkin_candy_grob <- rasterGrob(readPNG(here("spooktober/Images/pumpkin basket.
 witch_grob <- rasterGrob(readPNG(here("spooktober/Images/witch.png")), interpolate = TRUE)
 hhouse_grob <- rasterGrob(readPNG(here("spooktober/Images/haunted-house.png")), interpolate = TRUE)
 hhouse_ghost_grob <- rasterGrob(readPNG(here("spooktober/Images/haunted-house_ghost.png")), interpolate = TRUE)
+pumpkin_1_grob <- rasterGrob(readPNG(here("spooktober/Images/pumpkin_1.png")), interpolate = TRUE)
+pumpkin_2_grob <- rasterGrob(readPNG(here("spooktober/Images/pumpkin_2.png")), interpolate = TRUE)
 ```
 
 <style>
@@ -304,18 +306,136 @@ haunted_states |>
 there are more haunted places per capita in the least populous states. 
 
 
-<!--
-### <mark> __🎃 October 4: Pumpkin Production US 🎃__ </mark>
 
-https://en.wikipedia.org/wiki/Hundredweight
+### <mark> __🎃 October 4: US Pumpkin Production 🎃__ </mark>
 
-National Agricultural Statistics Service
--->
-<!--
-### <mark> __🎃 October 5: Candy 🎃__ </mark>
--->
+```{r, pumpkin_prod_gif, eval = FALSE, echo = TRUE}
+pumpkin_prod <- read_csv(here("spooktober/Data/us_pumpkins.csv")) |> 
+  clean_names() |> 
+  select(year, state, value) |> 
+  filter(!value == "(D)") |> 
+  mutate(value = as.numeric(gsub(",", "", value))) |> 
+  mutate(value_kg = value*45.36) |> 
+  mutate(state = str_to_title(state))
 
-```{r, eval = FALSE}
+us_states <- us_map("states")
+
+state_centers <- st_centroid(us_states)
+
+state_centers_coords <- state_centers |>
+  st_coordinates() |> 
+  as.data.frame() |> 
+  bind_cols(us_states |> st_drop_geometry())
+
+bubble_data <- state_centers_coords |> 
+  left_join(pumpkin_prod, by = c("full" = "state")) |> 
+  drop_na(value) |> 
+  mutate(label = paste0(round(value_kg / 1e6), "M"))
+
+p <- ggplot() +
+  geom_sf(data = us_states, fill = "grey90", color = "black") +
+  geom_point(
+    data = bubble_data,
+    aes(x = X, y = Y, size = value_kg),
+    shape = 21,              
+    fill = "orange",          
+    color = "black",   
+    stroke = 1,               
+    alpha = 0.6
+  ) +
+  scale_size_continuous("Pumpkin Production (kg)", range = c(10, 40), guide = "none") +
+   ggnewscale::new_scale("size") +
+   geom_text(
+    data = bubble_data,
+    aes(x = X, y = Y, label = label, size = value_kg),
+    color = "black",
+    fontface = "bold"
+  ) +
+  scale_size_continuous(range = c(3, 6), guide = "none") +  # text size
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5, size = 30, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5, size = 20, face = "bold"),
+        plot.caption = element_text(hjust = 0, face = "bold", size = 12, colour = "#4d4d4d", )) +
+  labs(title = "Pumpkin Production by U.S. State (kg)",
+       subtitle = "Year: {closest_state}",
+       caption = "Graphic: Cole Baril\nData: USDA National Agricultural Statistics Service") +
+  transition_states(year, transition_length = 2, state_length = 1) +
+  ease_aes('linear')
+
+animate(p, nframes = n_distinct(bubble_data$year), fps = 1, width = 1000, height = 800, renderer = gifski_renderer(loop = TRUE))
+
+anim_save(here("spooktober/Graphics/October 4 - US Pumpkin Production.gif"))
+```
+
+![](pumpkin_prod.gif)
+
+```{r, pumpkin_prod, fig.showtext = TRUE, eval = TRUE, echo = TRUE}
+pumpkin_prod <- read_csv(here("spooktober/Data/us_pumpkins.csv")) |> 
+  clean_names() |> 
+  select(year, state, value) |> 
+  filter(!value == "(D)") |> 
+  mutate(value = as.numeric(gsub(",", "", value))) |> 
+  mutate(value_kg = value*45.36) |> 
+  mutate(state = str_to_title(state)) |> 
+  filter(!state %in% c("Other States"))
+
+top_states <- pumpkin_prod |> 
+  group_by(state) |>
+  summarise(total_kg = sum(value_kg, na.rm = TRUE)) |>
+  arrange(desc(total_kg)) |>
+  slice_head(n = 5) |>
+  pull(state)
+
+pumpkin_plot_data <- pumpkin_prod |>
+  mutate(highlight = ifelse(state %in% top_states, state, "Other"))
+
+halloween_colors <- c("#E66101", "#1B9E77", "#7570B3", "#264653", "#F1C40F")
+
+color_values <- c(
+  setNames(rep("grey70", length(unique(pumpkin_plot_data$highlight)) - 5), 
+           setdiff(unique(pumpkin_plot_data$highlight), top_states)),
+  setNames(halloween_colors, top_states)
+)
+
+ggplot(pumpkin_plot_data, aes(x = year, y = value_kg, group = state)) +
+  geom_line(aes(color = highlight), linewidth = 1.5, alpha = 0.8) +
+  scale_color_manual(
+    values = color_values,
+    guide = guide_legend(override.aes = list(alpha = 1, size = 1.5))) +
+     annotation_custom(
+    pumpkin_1_grob,
+    xmin = 2004, xmax = 2009,
+    ymin = 275000000, ymax = 325000000) +
+       annotation_custom(
+    pumpkin_2_grob,
+    xmin = 2007, xmax = 2011,
+    ymin = 290000000, ymax = 340000000) +
+  scale_y_continuous(labels = scales::label_number(scale = 1e-6, suffix = "M", accuracy = 1)) +
+  scale_x_continuous(expand = c(0, 0)) +
+  theme_parchment(remove_grid = TRUE) +
+  theme(legend.position = "inside",
+        legend.position.inside = c(0.1, 0.85),
+        legend.title = element_text(size = 16),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 14),
+        axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank()) +
+  labs(
+    title = "Pumpkin Power: Illinois Leads the Nation",
+    x = "Year",
+    y = "Pumpkin Production (kg)",
+    color = "Top 5 States") +
+  inscribe(include_data_source = TRUE, data_source = "USDA National Agricultural Statistics Service")
+```
+
+> Illinois is the nation’s leading pumpkin producer, thanks to a combination of ideal growing conditions, robust processing infrastructure, and strategic location. The state’s warm summers and well-draining soils support high yields and quality pumpkins, while processing plants such as [Nestlé Libby in Morton](https://extension.illinois.edu/pumpkins) and [Seneca Foods in Princeville](https://ipmnewsroom.org/illinois-is-the-nations-pumpkin-producer-heres-why/?) handle much of the nation’s canned pumpkin supply.
+
+
+### <mark> __🎃 October 5: Halloween Candy Preferences 🎃__ </mark>
+
+```{r, candy2, eval = TRUE, echo = TRUE, fig.showtext = TRUE}
 candy <- read_csv(here("spooktober/Data/candy-data.csv")) |> 
   rename("peanuty-almondy" = "peanutyalmondy",
          "crisped rice wafer" = "crispedricewafer",
@@ -326,56 +446,18 @@ candy <- read_csv(here("spooktober/Data/candy-data.csv")) |>
   rename_with(str_to_title)
          
 
-# boolean columns
+
 flavor_cols <- c("Chocolate", "Fruity", "Caramel", "Peanuty-Almondy",
                  "Nougat", "Crisped Rice Wafer", "Hard", "Bar", "Pluribus")
 
-candy_long <- candy %>%
-  select(Name, all_of(flavor_cols), `Sugar Percent`, `Price Percent`, `Win Percent`) %>%
-  pivot_longer(cols = -Name, names_to = "attribute", values_to = "value") %>%
-  group_by(attribute) %>%
-  mutate(scaled_value = if (all(value %in% c(0,1))) value else scales::rescale(value, to = c(0,1))) %>%
-  ungroup()
-
-# order candies by winpercent
-candy_order <- candy %>%
-  arrange(desc(`Win Percent`)) %>%
-  pull(Name)
-
-candy_long$Name <- factor(candy_long$Name, levels = candy_order)
-
-# plot
-ggplot(candy_long, aes(x = attribute, y = Name, fill = scaled_value)) +
-  geom_tile(color = "grey20") +
-  scale_fill_gradient(low = "white", high = "darkred") +
-  labs(title = "Candy DNA Barcode",
-       x = "Candy Attributes", y = "Candy (ranked by win%)",
-       fill = "Value") +
-  theme_minimal(base_size = 12) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        panel.grid = element_blank(),
-        legend.position = "right",
-        plot.title = element_text(face = "bold"))
-```
-
-```{r, eval=FALSE}
-library(igraph)
-library(ggraph)
-
-# pick only boolean flavor attributes
 flavor_data <- candy %>% select(all_of(flavor_cols))
 
-# build co-occurrence matrix
 co_matrix <- t(flavor_data) %*% as.matrix(flavor_data)
 
-# remove self-loops
 diag(co_matrix) <- 0
 
-# make graph
 g <- graph_from_adjacency_matrix(co_matrix, mode = "undirected", weighted = TRUE)
 
-# calculate average winpercent per edge
 edge_weights <- apply(as_edgelist(g), 1, function(edge) {
   attr1 <- edge[1]; attr2 <- edge[2]
   mean(candy$`Win Percent`[candy[[attr1]] == 1 & candy[[attr2]] == 1], na.rm = TRUE)
@@ -383,29 +465,37 @@ edge_weights <- apply(as_edgelist(g), 1, function(edge) {
 
 E(g)$avg_win <- edge_weights
 
-# plot
 ggraph(g, layout = "fr") +
   geom_edge_link(aes(width = weight, color = avg_win), alpha = 0.7) +
   geom_node_point(size = 8, color = "orange") +
-  geom_node_text(aes(label = name), repel = TRUE, size = 4) +
+  geom_node_text(aes(label = name),  size = 4, fontface = "bold", nudge_y = -0.05) +
   scale_edge_width(range = c(0.5, 5)) +
   scale_edge_color_gradient(low = "lightblue", high = "darkred") +
   theme_void() +
-  theme(
-        plot.title = element_text( size = 40),
-        legend.position = "top",
-        legend.key.width = unit(3, "lines"),
-        legend.title = element_text(face = "bold", size = 15, hjust = 0.5),
-        ) +
-  labs(title = "Candy Flavor Constellation Map",
-       edge_color = "Avg Win%", edge_width = "Co-occurrence") +
-  inscribe(type = "plot", include_data_source = TRUE, data_source = "Walt Hickey")
+  theme(plot.title = element_text(size = 20, face = "bold", hjust = 0),
+        legend.position = "left",
+        legend.justification = "left",
+        legend.box.just = "left",
+        legend.title.align = 0,                    
+        legend.text.align = 0,                     
+        legend.key.width = unit(1.5, "lines"),
+        legend.text = element_text(size = 13),
+        legend.title = element_text(
+        face = "bold",
+        size = 15,
+        hjust = 0,                               
+        vjust = 0.5,
+        margin = margin(b = 5)),
+        plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+  labs(title = "Sweet Spots: Popular Candy Attributes and Their Co-occurrences",
+       edge_color = "Win Percent", edge_width = "Co-occurrence") +
+  inscribe(type = "plot", include_data_source = TRUE, data_source = "Walt Hickey Halloween Candy Power Ranking ")
 ```
 
-<!--
+
 ### <mark> __🎃 October 6: Spirit Halloween 🎃__ </mark>
--->
-```{r, fig.showtext = TRUE, eval = FALSE}
+
+```{r, fig.showtext = TRUE, eval = TRUE, echo = TRUE}
 
 # Load Spirit Halloween store data
 spirit_halloween <- read_csv(here("spooktober/Data/spirit_halloween_stores_geocoded.csv")) |>
@@ -535,7 +625,7 @@ final_map +
 <!--
 ### <mark> __🎃 October 7: Retail Spending 🎃__ </mark>
 -->
-```{r, retail_spending, fig.showtext=TRUE, eval=FALSE}
+```{r, retail_spending, fig.showtext = TRUE, eval = FALSE}
 retail_spending <- read_csv(here("spooktober/Data/halloween_spending_totals_NRF.csv")) |> 
   pivot_longer(!year, names_to = "category", values_to = "amount") |> 
   mutate(amount = as.numeric(amount)) |> 
@@ -586,3 +676,80 @@ ggplot(retail_spending |> filter(category != "Total"), aes(x = year, y = amount,
 <!--
 > Halloween spending in the U.S. has been steadily increasing year over year. Interestingly, there is a noticeable dip in spending for candy, cards and costuimes around 2020, while decoration spending doesn't decrease to the same extent. This could indicate that people went out less (e.g., trick-or-treating, parties), but still decorated their homes."
 -->
+
+
+<!--
+### <mark> __🎃 October 8: UFO Sightings 🎃__ </mark>
+-->
+```{r, ufo_sightings, fig.showtext = TRUE, eval = FALSE}
+ufo <- read_csv(here("spooktober/Data/UFO_sightings.csv"))
+
+
+# This dataset is very messy. Notably, the countries/cities are not standardized. 
+# I believe this dataset was all user-submitted with no drop-down selectors. 
+# I will do my best to clean the data, but the quality of the data may not be there. 
+
+ufo_cleaned <- ufo |> 
+    mutate(datetime = mdy_hm(datetime),
+         date = as_date(datetime)) |> 
+  mutate(across(.cols = c("state", "country"), ~str_to_upper(.))) |> 
+  drop_na(longitude, latitude) 
+  
+
+ 
+
+# Bin in 11km x 11km regions
+ufo_binned <- ufo_cleaned |> 
+  mutate(lat_bin = round(latitude, 1),
+         lon_bin = round(longitude, 1)) |> 
+  reframe(n = n(),
+          .by = c("lat_bin", "lon_bin"))
+
+ufo_sf <- ufo_binned |> drop_na() |> 
+  st_as_sf(coords = c("lon_bin", "lat_bin"), crs = 4326)
+
+
+# Leaflet
+
+library(leaflet)
+library(sf)
+
+leaflet(ufo_sf) |>
+  addProviderTiles(providers$CartoDB.Positron) |>  # nice neutral basemap
+  addCircleMarkers(
+    radius = ~scales::rescale(n, to = c(2, 10)),   # size by sightings
+    color = "darkred",
+    stroke = FALSE,
+    fillOpacity = 0.6,
+    popup = ~paste(
+      "<b>Sightings:</b>", n, "<br>",
+      "<b>Latitude:</b>", round(st_coordinates(geometry)[,2], 2), "<br>",
+      "<b>Longitude:</b>", round(st_coordinates(geometry)[,1], 2)
+    )
+  ) |>
+  addLegend("bottomright",
+            pal = colorNumeric("Reds", ufo_sf$n),
+            values = ~n,
+            title = "Sightings") |>
+  setView(lng = 0, lat = 20, zoom = 2)
+
+# db scan
+
+library(dbscan)
+
+coords <- ufo_cleaned |> select(longitude, latitude)
+clusters <- dbscan(coords, eps = 0.1, minPts = 10) # eps in degrees (~55 km)
+
+ufo_cleaned$cluster <- clusters$cluster
+
+ufo_clustered <- ufo_cleaned |>
+  group_by(cluster) |>
+  summarise(lon = mean(longitude), lat = mean(latitude), count = n(), .groups = "drop")
+
+ggplot() +
+  borders("world", colour = "gray70", fill = "gray90") +
+  geom_point(data = ufo_clustered, aes(x = lon, y = lat, size = count),
+             color = "darkorange", alpha = 0.7) +
+  scale_size_continuous(range = c(1, 8), name = "Sightings") +
+  coord_quickmap()
+```
